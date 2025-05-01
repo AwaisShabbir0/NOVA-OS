@@ -79,6 +79,47 @@ function ProcessManagement() {
     }
   };
 
+  const handleBlockProcess = (e) => {
+    e.preventDefault();
+    if (selectedProcessID) {
+      setProcesses(prev => prev.map(p => 
+        p.processID === parseInt(selectedProcessID)
+          ? { ...p, currentState: 'Blocked' } 
+          : p
+      ));
+      setSelectedProcessID('');
+      setActiveModal(null);
+    }
+  };
+
+  const handleWakeupProcess = (e) => {
+    e.preventDefault();
+    if (selectedProcessID) {
+      setProcesses(prev => prev.map(p => 
+        p.processID === parseInt(selectedProcessID)
+          ? { ...p, currentState: 'Ready' } 
+          : p
+      ));
+      setSelectedProcessID('');
+      setActiveModal(null);
+    }
+  };
+
+  const handleDispatchProcess = (e) => {
+    e.preventDefault();
+    if (selectedProcessID) {
+      setProcesses(prev => prev.map(p => 
+        p.processID === parseInt(selectedProcessID)
+          ? { ...p, currentState: 'Running' } 
+          : p.currentState === 'Running' 
+            ? { ...p, currentState: 'Ready' } // Preempt other running process
+            : p
+      ));
+      setSelectedProcessID('');
+      setActiveModal(null);
+    }
+  };
+
   return (
     <div className="process-management">
       <h2>Process Management</h2>
@@ -88,6 +129,9 @@ function ProcessManagement() {
         <button className="btn" onClick={() => setActiveModal('destroy')}>Destroy Process</button>
         <button className="btn" onClick={() => setActiveModal('suspend')}>Suspend Process</button>
         <button className="btn" onClick={() => setActiveModal('resume')}>Resume Process</button>
+        <button className="btn" onClick={() => setActiveModal('block')}>Block Process</button>
+        <button className="btn" onClick={() => setActiveModal('wakeup')}>Wakeup Process</button>
+        <button className="btn" onClick={() => setActiveModal('dispatch')}>Dispatch Process</button>
       </div>
 
       {activeModal && (
@@ -162,7 +206,7 @@ function ProcessManagement() {
                 >
                   <option value="">Select a process to suspend</option>
                   {processes
-                    .filter(p => p.currentState !== 'Suspended' && p.currentState !== 'Terminated')
+                    .filter(p => p.currentState !== 'Suspended' && p.currentState !== 'Terminated' && p.currentState !== 'Blocked')
                     .map(process => (
                       <option key={process.processID} value={process.processID}>
                         {`ID: ${process.processID} - ${process.owner} (${process.currentState})`}
@@ -194,7 +238,70 @@ function ProcessManagement() {
               </form>
             )}
 
-            {!['create', 'destroy', 'suspend', 'resume'].includes(activeModal) && (
+            {activeModal === 'block' && (
+              <form onSubmit={handleBlockProcess} className="action-form">
+                <h3>Block Process</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a process to block</option>
+                  {processes
+                    .filter(p => p.currentState === 'Running')
+                    .map(process => (
+                      <option key={process.processID} value={process.processID}>
+                        {`ID: ${process.processID} - ${process.owner} (${process.currentState})`}
+                      </option>
+                    ))}
+                </select>
+                <button className="btn" type="submit">Block Process</button>
+              </form>
+            )}
+
+            {activeModal === 'wakeup' && (
+              <form onSubmit={handleWakeupProcess} className="action-form">
+                <h3>Wakeup Process</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a blocked process</option>
+                  {processes
+                    .filter(p => p.currentState === 'Blocked')
+                    .map(process => (
+                      <option key={process.processID} value={process.processID}>
+                        {`ID: ${process.processID} - ${process.owner}`}
+                      </option>
+                    ))}
+                </select>
+                <button className="btn" type="submit">Wakeup Process</button>
+              </form>
+            )}
+
+            {activeModal === 'dispatch' && (
+              <form onSubmit={handleDispatchProcess} className="action-form">
+                <h3>Dispatch Process</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a ready process</option>
+                  {processes
+                    .filter(p => p.currentState === 'Ready')
+                    .map(process => (
+                      <option key={process.processID} value={process.processID}>
+                        {`ID: ${process.processID} - ${process.owner}`}
+                      </option>
+                    ))}
+                </select>
+                <button className="btn" type="submit">Dispatch Process</button>
+              </form>
+            )}
+
+            {!['create', 'destroy', 'suspend', 'resume', 'block', 'wakeup', 'dispatch'].includes(activeModal) && (
               <div className="coming-soon">
                 <h3>{activeModal} - Coming Soon 🚀</h3>
               </div>
