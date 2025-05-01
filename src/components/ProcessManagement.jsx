@@ -10,27 +10,16 @@ function ProcessManagement() {
     owner: '',
     priority: '',
     memoryRequired: '',
-    currentState: 'New',
     processor: 'CPU-0'
   });
-  const [selectedProcessID, setSelectedProcessID] = useState(''); // 🆕 for Destroy selection
+  const [selectedProcessID, setSelectedProcessID] = useState('');
   const [nextProcessID, setNextProcessID] = useState(1);
 
-  const states = ["New", "Ready", "Running", "Waiting", "Terminated"];
   const processors = ["CPU-0", "CPU-1", "CPU-2", "CPU-3"];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleDestroyProcess = (e) => {
-    e.preventDefault();
-    if (selectedProcessID) {
-      setProcesses(prev => prev.filter(p => p.processID !== parseInt(selectedProcessID)));
-      setSelectedProcessID('');
-      setActiveModal(null);
-    }
   };
 
   const handleSubmit = (e) => {
@@ -39,8 +28,7 @@ function ProcessManagement() {
       owner: formData.owner,
       priority: parseInt(formData.priority),
       memoryRequired: parseInt(formData.memoryRequired),
-      currentState: formData.currentState,
-      processor: formData.processor,
+      processor: formData.processor
     });
 
     newProcess.processID = nextProcessID;
@@ -52,9 +40,43 @@ function ProcessManagement() {
       owner: '',
       priority: '',
       memoryRequired: '',
-      currentState: 'New',
       processor: 'CPU-0'
     });
+  };
+
+  const handleDestroyProcess = (e) => {
+    e.preventDefault();
+    if (selectedProcessID) {
+      setProcesses(prev => prev.filter(p => p.processID !== parseInt(selectedProcessID)));
+      setSelectedProcessID('');
+      setActiveModal(null);
+    }
+  };
+
+  const handleSuspendProcess = (e) => {
+    e.preventDefault();
+    if (selectedProcessID) {
+      setProcesses(prev => prev.map(p => 
+        p.processID === parseInt(selectedProcessID)
+          ? { ...p, currentState: 'Suspended' } 
+          : p
+      ));
+      setSelectedProcessID('');
+      setActiveModal(null);
+    }
+  };
+
+  const handleResumeProcess = (e) => {
+    e.preventDefault();
+    if (selectedProcessID) {
+      setProcesses(prev => prev.map(p => 
+        p.processID === parseInt(selectedProcessID)
+          ? { ...p, currentState: 'Ready' } 
+          : p
+      ));
+      setSelectedProcessID('');
+      setActiveModal(null);
+    }
   };
 
   return (
@@ -66,11 +88,6 @@ function ProcessManagement() {
         <button className="btn" onClick={() => setActiveModal('destroy')}>Destroy Process</button>
         <button className="btn" onClick={() => setActiveModal('suspend')}>Suspend Process</button>
         <button className="btn" onClick={() => setActiveModal('resume')}>Resume Process</button>
-        <button className="btn" onClick={() => setActiveModal('block')}>Block Process</button>
-        <button className="btn" onClick={() => setActiveModal('wakeup')}>Wakeup Process</button>
-        <button className="btn" onClick={() => setActiveModal('dispatch')}>Dispatch Process</button>
-        <button className="btn" onClick={() => setActiveModal('changePriority')}>Change Process Priority</button>
-        <button className="btn" onClick={() => setActiveModal('communicate')}>Process Communication</button>
       </div>
 
       {activeModal && (
@@ -81,7 +98,6 @@ function ProcessManagement() {
             {activeModal === 'create' && (
               <form onSubmit={handleSubmit} className="create-form">
                 <h3>Create New Process</h3>
-
                 <input
                   type="text"
                   name="owner"
@@ -90,7 +106,6 @@ function ProcessManagement() {
                   onChange={handleInputChange}
                   required
                 />
-
                 <input
                   type="number"
                   name="priority"
@@ -101,7 +116,6 @@ function ProcessManagement() {
                   onChange={handleInputChange}
                   required
                 />
-
                 <input
                   type="number"
                   name="memoryRequired"
@@ -112,23 +126,16 @@ function ProcessManagement() {
                   onChange={handleInputChange}
                   required
                 />
-
-                <select name="currentState" value={formData.currentState} onChange={handleInputChange}>
-                  {states.map(state => <option key={state} value={state}>{state}</option>)}
-                </select>
-
                 <select name="processor" value={formData.processor} onChange={handleInputChange}>
                   {processors.map(proc => <option key={proc} value={proc}>{proc}</option>)}
                 </select>
-
                 <button className="btn" type="submit">Add Process</button>
               </form>
             )}
 
             {activeModal === 'destroy' && (
-              <form onSubmit={handleDestroyProcess} className="destroy-form">
+              <form onSubmit={handleDestroyProcess} className="action-form">
                 <h3>Destroy Process</h3>
-
                 <select
                   value={selectedProcessID}
                   onChange={(e) => setSelectedProcessID(e.target.value)}
@@ -137,16 +144,57 @@ function ProcessManagement() {
                   <option value="">Select a process</option>
                   {processes.map(process => (
                     <option key={process.processID} value={process.processID}>
-                      {`ID: ${process.processID} - ${process.owner}`}
+                      {`ID: ${process.processID} - ${process.owner} (${process.currentState})`}
                     </option>
                   ))}
                 </select>
-
                 <button className="btn" type="submit">Destroy</button>
               </form>
             )}
 
-            {activeModal !== 'create' && activeModal !== 'destroy' && (
+            {activeModal === 'suspend' && (
+              <form onSubmit={handleSuspendProcess} className="action-form">
+                <h3>Suspend Process</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a process to suspend</option>
+                  {processes
+                    .filter(p => p.currentState !== 'Suspended' && p.currentState !== 'Terminated')
+                    .map(process => (
+                      <option key={process.processID} value={process.processID}>
+                        {`ID: ${process.processID} - ${process.owner} (${process.currentState})`}
+                      </option>
+                    ))}
+                </select>
+                <button className="btn" type="submit">Suspend Process</button>
+              </form>
+            )}
+
+            {activeModal === 'resume' && (
+              <form onSubmit={handleResumeProcess} className="action-form">
+                <h3>Resume Process</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a suspended process</option>
+                  {processes
+                    .filter(p => p.currentState === 'Suspended')
+                    .map(process => (
+                      <option key={process.processID} value={process.processID}>
+                        {`ID: ${process.processID} - ${process.owner}`}
+                      </option>
+                    ))}
+                </select>
+                <button className="btn" type="submit">Resume Process</button>
+              </form>
+            )}
+
+            {!['create', 'destroy', 'suspend', 'resume'].includes(activeModal) && (
               <div className="coming-soon">
                 <h3>{activeModal} - Coming Soon 🚀</h3>
               </div>
@@ -173,7 +221,7 @@ function ProcessManagement() {
               {processes.map(process => (
                 <tr key={process.processID}>
                   <td>{process.processID}</td>
-                  <td>{process.currentState}</td>
+                  <td className={`state-${process.currentState.toLowerCase()}`}>{process.currentState}</td>
                   <td>{process.owner}</td>
                   <td>{process.priority}</td>
                   <td>{(process.memoryRequired / 1024).toFixed(1)}</td>
