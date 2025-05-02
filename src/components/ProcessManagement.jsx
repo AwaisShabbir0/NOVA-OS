@@ -13,6 +13,7 @@ function ProcessManagement() {
     processor: 'CPU-0'
   });
   const [selectedProcessID, setSelectedProcessID] = useState('');
+  const [newPriority, setNewPriority] = useState('');
   const [nextProcessID, setNextProcessID] = useState(1);
 
   const processors = ["CPU-0", "CPU-1", "CPU-2", "CPU-3"];
@@ -120,6 +121,20 @@ function ProcessManagement() {
     }
   };
 
+  const handleChangePriority = (e) => {
+    e.preventDefault();
+    if (selectedProcessID && newPriority) {
+      setProcesses(prev => prev.map(p => 
+        p.processID === parseInt(selectedProcessID)
+          ? { ...p, priority: parseInt(newPriority) } 
+          : p
+      ));
+      setSelectedProcessID('');
+      setNewPriority('');
+      setActiveModal(null);
+    }
+  };
+
   return (
     <div className="process-management">
       <h2>Process Management</h2>
@@ -132,6 +147,7 @@ function ProcessManagement() {
         <button className="btn" onClick={() => setActiveModal('block')}>Block Process</button>
         <button className="btn" onClick={() => setActiveModal('wakeup')}>Wakeup Process</button>
         <button className="btn" onClick={() => setActiveModal('dispatch')}>Dispatch Process</button>
+        <button className="btn" onClick={() => setActiveModal('changePriority')}>Change Priority</button>
       </div>
 
       {activeModal && (
@@ -301,7 +317,35 @@ function ProcessManagement() {
               </form>
             )}
 
-            {!['create', 'destroy', 'suspend', 'resume', 'block', 'wakeup', 'dispatch'].includes(activeModal) && (
+            {activeModal === 'changePriority' && (
+              <form onSubmit={handleChangePriority} className="action-form">
+                <h3>Change Process Priority</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a process</option>
+                  {processes.map(process => (
+                    <option key={process.processID} value={process.processID}>
+                      {`ID: ${process.processID} - ${process.owner} (Current Priority: ${process.priority})`}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  placeholder="New Priority (0-9)"
+                  min="0"
+                  max="9"
+                  value={newPriority}
+                  onChange={(e) => setNewPriority(e.target.value)}
+                  required
+                />
+                <button className="btn" type="submit">Update Priority</button>
+              </form>
+            )}
+
+            {!['create', 'destroy', 'suspend', 'resume', 'block', 'wakeup', 'dispatch', 'changePriority'].includes(activeModal) && (
               <div className="coming-soon">
                 <h3>{activeModal} - Coming Soon 🚀</h3>
               </div>
@@ -330,7 +374,7 @@ function ProcessManagement() {
                   <td>{process.processID}</td>
                   <td className={`state-${process.currentState.toLowerCase()}`}>{process.currentState}</td>
                   <td>{process.owner}</td>
-                  <td>{process.priority}</td>
+                  <td className={`priority-${process.priority}`}>{process.priority}</td>
                   <td>{(process.memoryRequired / 1024).toFixed(1)}</td>
                   <td>{process.processor}</td>
                 </tr>
