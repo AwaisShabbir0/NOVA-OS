@@ -146,3 +146,28 @@ th {
   color: #00d4ff;
   font-size: 1.5rem;
 }
+
+/* Priority level styling */
+.priority-0 { color: #757575; }
+.priority-1 { color: #2196F3; }
+.priority-2 { color: #4CAF50; }
+.priority-3 { color: #FFC107; }
+.priority-4 { color: #FF9800; }
+.priority-5 { color: #FF5722; }
+.priority-6 { color: #F44336; }
+.priority-7 { color: #E91E63; }
+.priority-8 { color: #9C27B0; }
+.priority-9 { color: #673AB7; font-weight: bold; }
+/* Add to ProcessManagement.css */
+.scheduling-section {
+  margin: 30px 0;
+  text-align: center;
+}
+
+.scheduling-btn {
+  background: linear-gradient(45deg, #9C27B0, #673AB7) !important;
+}
+
+.scheduling-btn:hover {
+  background: linear-gradient(45deg, #673AB7, #9C27B0) !important;
+}

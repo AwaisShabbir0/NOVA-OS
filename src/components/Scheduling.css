@@ -1,0 +1,35 @@
+/* src/components/Scheduling.css */
+.scheduling {
+    padding: 20px;
+    text-align: center;
+    color: white;
+  }
+  
+  .scheduling h2 {
+    color: #00d4ff;
+    margin-bottom: 30px;
+  }
+  
+  .scheduling-visualization {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 800px;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+  }
+  
+  .back-btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: linear-gradient(45deg, #0077ff, #00d4ff);
+    border-radius: 8px;
+    color: white;
+    text-decoration: none;
+    transition: transform 0.2s;
+  }
+  
+  .back-btn:hover {
+    transform: scale(1.05);
+  }

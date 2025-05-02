@@ -57,9 +57,9 @@ function ProcessManagement() {
   const handleSuspendProcess = (e) => {
     e.preventDefault();
     if (selectedProcessID) {
-      setProcesses(prev => prev.map(p => 
+      setProcesses(prev => prev.map(p =>
         p.processID === parseInt(selectedProcessID)
-          ? { ...p, currentState: 'Suspended' } 
+          ? { ...p, currentState: 'Suspended' }
           : p
       ));
       setSelectedProcessID('');
@@ -70,9 +70,9 @@ function ProcessManagement() {
   const handleResumeProcess = (e) => {
     e.preventDefault();
     if (selectedProcessID) {
-      setProcesses(prev => prev.map(p => 
+      setProcesses(prev => prev.map(p =>
         p.processID === parseInt(selectedProcessID)
-          ? { ...p, currentState: 'Ready' } 
+          ? { ...p, currentState: 'Ready' }
           : p
       ));
       setSelectedProcessID('');
@@ -83,9 +83,9 @@ function ProcessManagement() {
   const handleBlockProcess = (e) => {
     e.preventDefault();
     if (selectedProcessID) {
-      setProcesses(prev => prev.map(p => 
+      setProcesses(prev => prev.map(p =>
         p.processID === parseInt(selectedProcessID)
-          ? { ...p, currentState: 'Blocked' } 
+          ? { ...p, currentState: 'Blocked' }
           : p
       ));
       setSelectedProcessID('');
@@ -96,9 +96,9 @@ function ProcessManagement() {
   const handleWakeupProcess = (e) => {
     e.preventDefault();
     if (selectedProcessID) {
-      setProcesses(prev => prev.map(p => 
+      setProcesses(prev => prev.map(p =>
         p.processID === parseInt(selectedProcessID)
-          ? { ...p, currentState: 'Ready' } 
+          ? { ...p, currentState: 'Ready' }
           : p
       ));
       setSelectedProcessID('');
@@ -109,10 +109,10 @@ function ProcessManagement() {
   const handleDispatchProcess = (e) => {
     e.preventDefault();
     if (selectedProcessID) {
-      setProcesses(prev => prev.map(p => 
+      setProcesses(prev => prev.map(p =>
         p.processID === parseInt(selectedProcessID)
-          ? { ...p, currentState: 'Running' } 
-          : p.currentState === 'Running' 
+          ? { ...p, currentState: 'Running' }
+          : p.currentState === 'Running'
             ? { ...p, currentState: 'Ready' } // Preempt other running process
             : p
       ));
@@ -124,9 +124,9 @@ function ProcessManagement() {
   const handleChangePriority = (e) => {
     e.preventDefault();
     if (selectedProcessID && newPriority) {
-      setProcesses(prev => prev.map(p => 
+      setProcesses(prev => prev.map(p =>
         p.processID === parseInt(selectedProcessID)
-          ? { ...p, priority: parseInt(newPriority) } 
+          ? { ...p, priority: parseInt(newPriority) }
           : p
       ));
       setSelectedProcessID('');
@@ -383,6 +383,18 @@ function ProcessManagement() {
           </table>
         </div>
       )}
+
+      <div className="buttons">
+        {/* ... other buttons ... */}
+        <Link to="/scheduling" className="btn">Process Scheduling</Link>
+      </div>
+
+
+      <div className="scheduling-section">
+        <Link to="/scheduling" className="btn scheduling-btn">
+          View Process Scheduling
+        </Link>
+      </div>
 
       <Link to="/" className="back-btn">⬅ Back to Control Panel</Link>
     </div>
