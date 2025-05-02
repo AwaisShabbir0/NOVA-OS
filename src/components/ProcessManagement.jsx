@@ -384,17 +384,13 @@ function ProcessManagement() {
         </div>
       )}
 
-      <div className="buttons">
-        {/* ... other buttons ... */}
-        <Link to="/scheduling" className="btn">Process Scheduling</Link>
-      </div>
-
-
-      <div className="scheduling-section">
-        <Link to="/scheduling" className="btn scheduling-btn">
-          View Process Scheduling
-        </Link>
-      </div>
+      <Link
+        to="/scheduling"
+        state={{ processes }}
+        className="btn scheduling-btn"
+      >
+        Process Scheduling
+      </Link>
 
       <Link to="/" className="back-btn">⬅ Back to Control Panel</Link>
     </div>
