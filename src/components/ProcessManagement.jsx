@@ -9,7 +9,8 @@ function ProcessManagement() {
   const [formData, setFormData] = useState({
     owner: '',
     priority: '',
-    memoryRequired: '',
+    burstTime: '1',
+    arrivalTime: '0',
     processor: 'CPU-0'
   });
   const [selectedProcessID, setSelectedProcessID] = useState('');
@@ -28,7 +29,8 @@ function ProcessManagement() {
     const newProcess = new PCB({
       owner: formData.owner,
       priority: parseInt(formData.priority),
-      memoryRequired: parseInt(formData.memoryRequired),
+      burstTime: parseInt(formData.burstTime),
+      arrivalTime: parseInt(formData.arrivalTime),
       processor: formData.processor
     });
 
@@ -40,7 +42,8 @@ function ProcessManagement() {
     setFormData({
       owner: '',
       priority: '',
-      memoryRequired: '',
+      burstTime: '1',
+      arrivalTime: '0',
       processor: 'CPU-0'
     });
   };
@@ -85,7 +88,7 @@ function ProcessManagement() {
     if (selectedProcessID) {
       setProcesses(prev => prev.map(p =>
         p.processID === parseInt(selectedProcessID)
-          ? { ...p, currentState: 'Blocked' }
+          ? { ...p, currentState: 'Waiting', ioState: 'Blocked' }
           : p
       ));
       setSelectedProcessID('');
@@ -98,7 +101,7 @@ function ProcessManagement() {
     if (selectedProcessID) {
       setProcesses(prev => prev.map(p =>
         p.processID === parseInt(selectedProcessID)
-          ? { ...p, currentState: 'Ready' }
+          ? { ...p, currentState: 'Ready', ioState: 'Idle' }
           : p
       ));
       setSelectedProcessID('');
@@ -113,7 +116,7 @@ function ProcessManagement() {
         p.processID === parseInt(selectedProcessID)
           ? { ...p, currentState: 'Running' }
           : p.currentState === 'Running'
-            ? { ...p, currentState: 'Ready' } // Preempt other running process
+            ? { ...p, currentState: 'Ready' }
             : p
       ));
       setSelectedProcessID('');
@@ -161,8 +164,29 @@ function ProcessManagement() {
                 <input
                   type="text"
                   name="owner"
-                  placeholder="Owner Name"
+                  placeholder="Process Name (e.g.P1)"
                   value={formData.owner}
+                  onChange={handleInputChange}
+                  required
+                />
+                <b>Burst time</b>
+                <input
+                  type="number"
+                  name="burstTime"
+                  placeholder="Burst Time (seconds)"
+                  min="1"
+                  max="30"
+                  value={formData.burstTime}
+                  onChange={handleInputChange}
+                  required
+                />
+                <b>Arival Time</b>
+                <input
+                  type="number"
+                  name="arrivalTime"
+                  placeholder="Arrival Time (seconds)"
+                  min="0"
+                  value={formData.arrivalTime}
                   onChange={handleInputChange}
                   required
                 />
@@ -173,16 +197,6 @@ function ProcessManagement() {
                   min="0"
                   max="9"
                   value={formData.priority}
-                  onChange={handleInputChange}
-                  required
-                />
-                <input
-                  type="number"
-                  name="memoryRequired"
-                  placeholder="Memory Required (MB)"
-                  min="512"
-                  max="4096"
-                  value={formData.memoryRequired}
                   onChange={handleInputChange}
                   required
                 />
@@ -222,7 +236,7 @@ function ProcessManagement() {
                 >
                   <option value="">Select a process to suspend</option>
                   {processes
-                    .filter(p => p.currentState !== 'Suspended' && p.currentState !== 'Terminated' && p.currentState !== 'Blocked')
+                    .filter(p => p.currentState !== 'Suspended' && p.currentState !== 'Terminated' && p.currentState !== 'Waiting')
                     .map(process => (
                       <option key={process.processID} value={process.processID}>
                         {`ID: ${process.processID} - ${process.owner} (${process.currentState})`}
@@ -285,7 +299,7 @@ function ProcessManagement() {
                 >
                   <option value="">Select a blocked process</option>
                   {processes
-                    .filter(p => p.currentState === 'Blocked')
+                    .filter(p => p.currentState === 'Waiting')
                     .map(process => (
                       <option key={process.processID} value={process.processID}>
                         {`ID: ${process.processID} - ${process.owner}`}
@@ -344,12 +358,6 @@ function ProcessManagement() {
                 <button className="btn" type="submit">Update Priority</button>
               </form>
             )}
-
-            {!['create', 'destroy', 'suspend', 'resume', 'block', 'wakeup', 'dispatch', 'changePriority'].includes(activeModal) && (
-              <div className="coming-soon">
-                <h3>{activeModal} - Coming Soon 🚀</h3>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -357,38 +365,42 @@ function ProcessManagement() {
       {processes.length > 0 && (
         <div className="process-list">
           <h3>Processes:</h3>
-          <table className="process-table">
-            <thead>
-              <tr>
-                <th>Process ID</th>
-                <th>State</th>
-                <th>Owner</th>
-                <th>Priority</th>
-                <th>Memory (MB)</th>
-                <th>Processor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {processes.map(process => (
-                <tr key={process.processID}>
-                  <td>{process.processID}</td>
-                  <td className={`state-${process.currentState.toLowerCase()}`}>{process.currentState}</td>
-                  <td>{process.owner}</td>
-                  <td className={`priority-${process.priority}`}>{process.priority}</td>
-                  <td>{(process.memoryRequired / 1024).toFixed(1)}</td>
-                  <td>{process.processor}</td>
+          <div className="table-container">
+            <table className="process-table">
+              <thead>
+                <tr>
+                  <th>Process ID</th>
+                  <th>State</th>
+                  <th>Owner</th>
+                  <th>Priority</th>
+                  <th>Arrival</th>
+                  <th>Burst</th>
+                  <th>Memory (MB)</th>
+                  <th>Processor</th>
+                  <th>I/O State</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {processes.map(process => (
+                  <tr key={process.processID}>
+                    <td>{process.processID}</td>
+                    <td className={`state-${process.currentState.toLowerCase()}`}>{process.currentState}</td>
+                    <td>{process.owner}</td>
+                    <td className={`priority-${process.priority}`}>{process.priority}</td>
+                    <td>{process.arrivalTime}s</td>
+                    <td>{process.burstTime}s</td>
+                    <td>{Math.round(process.memoryRequired / 1024 * 10) / 10}</td>
+                    <td>{process.processor}</td>
+                    <td>{process.ioState}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      <Link
-        to="/scheduling"
-        state={{ processes }}
-        className="btn scheduling-btn"
-      >
+      <Link to="/scheduling" state={{ processes }} className="btn scheduling-btn">
         Process Scheduling
       </Link>
 

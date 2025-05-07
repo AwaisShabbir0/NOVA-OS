@@ -1,4 +1,3 @@
-/* Add to Scheduling.css */
 .controls {
   display: flex;
   gap: 15px;
@@ -41,6 +40,7 @@
 .queues {
   display: flex;
   gap: 20px;
+  margin-bottom: 20px;
 }
 
 .ready-queue, .completed-processes {
@@ -61,8 +61,144 @@
 
 .process.completed {
   border-left-color: #4CAF50;
+  opacity: 0.9;
+  margin-bottom: 10px;
+}
+
+.process.completed div:nth-child(1) {
+  grid-column: span 2;
+  color: #00d4ff;
+  font-weight: bold;
+  border-bottom: 1px solid #333;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+
+.process.completed div {
+  font-size: 0.85rem;
+}
+
+.ready-queue .process span {
+  font-size: 0.8rem;
   opacity: 0.8;
+  display: block;
+  margin-top: 4px;
+  color: #aaa;
+}
+
+.metrics {
+  background: #2c2c2c;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 20px auto;
+  max-width: 600px;
+}
+
+.metrics h3 {
+  text-align: center;
+  margin-bottom: 15px;
+  color: #00d4ff;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.metrics-grid div:nth-child(odd) {
+  font-weight: bold;
+  text-align: right;
+}
+
+.back-btn {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 20px;
+  background: linear-gradient(45deg, #0077ff, #00d4ff);
+  border-radius: 8px;
+  color: white;
+  text-decoration: none;
+  text-align: center;
+  width: fit-content;
+  transition: transform 0.2s;
+}
+
+.back-btn:hover {
+  transform: scale(1.05);
 }
 
 
 
+
+/* Gantt Chart Styles */
+.gantt-chart {
+  margin: 20px 0;
+  background: #2c2c2c;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.gantt-container {
+  display: flex;
+  align-items: center;
+  height: 60px;
+  margin-bottom: 5px;
+  overflow-x: auto;
+  padding: 10px 0;
+  background: #1e1e1e;
+  border-radius: 4px;
+}
+
+.gantt-item {
+  height: 40px;
+  margin-right: 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bold;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  position: relative;
+  min-width: 30px;
+}
+
+.gantt-item.current {
+  opacity: 0.8;
+  border: 2px dashed white;
+}
+
+.gantt-item span {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.gantt-time {
+  font-size: 10px !important;
+  margin-top: 2px;
+}
+
+.gantt-timeline {
+  display: flex;
+  gap: 28px;
+  margin-left: 2px;
+}
+
+.gantt-tick {
+  width: 0;
+  font-size: 11px;
+  color: #aaa;
+  position: relative;
+}
+
+.gantt-tick::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  width: 1px;
+  height: 5px;
+  background: #555;
+}
