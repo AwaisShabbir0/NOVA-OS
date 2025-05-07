@@ -8,6 +8,7 @@ import OtherOperations from './components/OtherOperations';
 import Configurations from './components/Configurations';
 import Scheduling from './components/Scheduling';
 import logo from './assets/novaos_logo.png';
+import SJF_scheduling from "./components/SJF_scheduling"
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/" element={<ControlPanel />} />
         <Route path="/process" element={<ProcessManagement />} />
         <Route path="/scheduling" element={<Scheduling />} /> {/* Add this route */}
+        <Route path="/SJF_scheduling" element={<SJF_scheduling />} /> {/* Add this route */}
         <Route path="/memory" element={<MemoryManagement />} />
         <Route path="/io" element={<IOManagement />} />
         <Route path="/other" element={<OtherOperations />} />

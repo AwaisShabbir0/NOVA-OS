@@ -401,7 +401,11 @@ function ProcessManagement() {
       )}
 
       <Link to="/scheduling" state={{ processes }} className="btn scheduling-btn">
-        Process Scheduling
+        FCFS Scheduling
+      </Link>
+
+      <Link to="/SJF_Scheduling" state={{ processes }} className="btn scheduling-btn">
+        SJF Scheduling
       </Link>
 
       <Link to="/" className="back-btn">⬅ Back to Control Panel</Link>
