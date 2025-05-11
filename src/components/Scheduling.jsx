@@ -250,6 +250,41 @@ function Scheduling() {
         </div>
       </div>
 
+            {completedProcesses.length > 0 && (
+  <div className="results-table">
+    <h3>Scheduling Results</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Process ID</th>
+          <th>Process Name</th>
+          <th>Arrival Time</th>
+          <th>Burst Time</th>
+          <th>Completion Time</th>
+          <th>Turnaround Time</th>
+          <th>Waiting Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {completedProcesses
+          .sort((a, b) => a.processID - b.processID)
+          .map(process => (
+            <tr key={process.processID}>
+              <td>P{process.processID}</td>
+              <td>{process.owner}</td>
+              <td>{process.arrivalTime}s</td>
+              <td>{process.burstTime}s</td>
+              <td>{process.completionTime}s</td>
+              <td>{process.turnaroundTime}s</td>
+              <td>{process.waitingTime}s</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
+
       {completedProcesses.length > 0 && (
         <div className="metrics">
           <h3>Scheduling Metrics</h3>
