@@ -23,52 +23,75 @@ function Scheduling() {
   }, [location.state]);
 
   useEffect(() => {
-    let timer;
-    if (isRunning) {
-      timer = setInterval(() => {
-        setTime(prevTime => {
-          const newTime = prevTime + 1;
+  let timer;
+  if (isRunning) {
+    timer = setInterval(() => {
+      setTime(prevTime => {
+        const newTime = prevTime + 1;
+        
+        // Check if current process completed
+        if (currentProcess && newTime === currentProcess.startTime + currentProcess.burstTime) {
+          const completionTime = newTime;
+          const turnaroundTime = completionTime - currentProcess.arrivalTime;
+          const waitingTime = turnaroundTime - currentProcess.burstTime;
           
-          if (currentProcess && newTime === currentProcess.startTime + currentProcess.burstTime) {
-            const completionTime = newTime;
-            const turnaroundTime = completionTime - currentProcess.arrivalTime;
-            const waitingTime = turnaroundTime - currentProcess.burstTime;
+          setCompletedProcesses(prev => [...prev, {
+            ...currentProcess,
+            completionTime,
+            turnaroundTime,
+            waitingTime
+          }]);
+          
+          setExecutionHistory(prev => [...prev, {
+            process: currentProcess,
+            start: currentProcess.startTime,
+            end: completionTime
+          }]);
+          
+          setCurrentProcess(null);
+          
+          // Immediately start next process if available
+          const nextProcess = processes
+            .sort((a, b) => a.arrivalTime - b.arrivalTime)
+            .find(p => p.arrivalTime <= newTime);
             
-            setCompletedProcesses(prev => [...prev, {
-              ...currentProcess,
-              completionTime,
-              turnaroundTime,
-              waitingTime
-            }]);
-            setExecutionHistory(prev => [...prev, {
-              process: currentProcess,
-              start: currentProcess.startTime,
-              end: newTime
-            }]);
-            setCurrentProcess(null);
+          if (nextProcess) {
+            setCurrentProcess({
+              ...nextProcess,
+              startTime: newTime // Start immediately after previous process
+            });
+            setProcesses(prev => prev.filter(p => p.processID !== nextProcess.processID));
           }
-
-          if (!currentProcess && processes.length > 0) {
-            const nextProcess = processes.find(p => p.arrivalTime <= newTime);
-            if (nextProcess) {
-              setCurrentProcess({
-                ...nextProcess,
-                startTime: newTime
-              });
-              setProcesses(prev => prev.filter(p => p.processID !== nextProcess.processID));
-            }
-          }
-
-          if (processes.length === 0 && !currentProcess && completedProcesses.length > 0) {
-            setIsRunning(false);
-          }
-
+          
           return newTime;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isRunning, processes, currentProcess, completedProcesses]);
+        }
+
+        // If no current process, find the next one at the start
+        if (!currentProcess && processes.length > 0) {
+          const nextProcess = processes
+            .sort((a, b) => a.arrivalTime - b.arrivalTime)
+            .find(p => p.arrivalTime <= newTime);
+            
+          if (nextProcess) {
+            setCurrentProcess({
+              ...nextProcess,
+              startTime: Math.max(newTime, nextProcess.arrivalTime)
+            });
+            setProcesses(prev => prev.filter(p => p.processID !== nextProcess.processID));
+          }
+        }
+
+        // Stop simulation if all processes completed
+        if (processes.length === 0 && !currentProcess && completedProcesses.length > 0) {
+          setIsRunning(false);
+        }
+
+        return newTime;
+      });
+    }, 1000);
+  }
+  return () => clearInterval(timer);
+}, [isRunning, processes, currentProcess, completedProcesses]);
 
   useEffect(() => {
     if (processes.length === 0 && currentProcess === null && completedProcesses.length > 0) {
