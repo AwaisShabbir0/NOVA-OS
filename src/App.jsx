@@ -9,6 +9,7 @@ import Configurations from './components/Configurations';
 import Scheduling from './components/Scheduling';
 import RR_scheduling from "./components/RR_scheduling";
 import ContiguousAllocation from './components/ContiguousAllocation';
+import NonContiguousAllocation from './components/NonContiguousAllocation';
 import logo from './assets/novaos_logo.png';
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
         <Route path="/RR_scheduling" element={<RR_scheduling />} />
         <Route path="/memory" element={<MemoryManagement />} />
         <Route path="/contiguous" element={<ContiguousAllocation />} />
+        <Route path='/noncontiguous' element={<NonContiguousAllocation/>} />
         <Route path="/io" element={<IOManagement />} />
         <Route path="/other" element={<OtherOperations />} />
         <Route path="/config" element={<Configurations />} />
