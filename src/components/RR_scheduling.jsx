@@ -27,13 +27,13 @@ function RRScheduling() {
         remainingTime: p.burstTime,
         lastPreempted: null
       }));
-      
+
       setProcesses(initialProcesses);
-      
+
       // Initialize ready queue with processes that have arrivalTime <= 0
       const initialReady = initialProcesses.filter(p => p.arrivalTime <= 0);
       setReadyQueue(initialReady);
-      
+
       // Remove these processes from the main processes list
       setProcesses(prev => prev.filter(p => p.arrivalTime > 0));
     }
@@ -43,14 +43,14 @@ function RRScheduling() {
   const runSimulation = () => {
     setTime(prevTime => {
       const currentTime = prevTime + 1;
-      
+
       // Check for newly arrived processes
-      const newArrivals = processes.filter(p => 
+      const newArrivals = processes.filter(p =>
         p.arrivalTime === currentTime &&
         !readyQueue.some(q => q.processID === p.processID) &&
         p !== currentProcess
       );
-      
+
       if (newArrivals.length > 0) {
         setReadyQueue(prev => [...prev, ...newArrivals]);
         setProcesses(prev => prev.filter(p => !newArrivals.some(n => n.processID === p.processID)));
@@ -173,7 +173,7 @@ function RRScheduling() {
       setTime(0);
       setCompletedProcesses([]);
       setExecutionHistory([]);
-      
+
       if (!currentProcess && readyQueue.length > 0) {
         const nextProcess = readyQueue[0];
         setCurrentProcess({
@@ -354,15 +354,51 @@ function RRScheduling() {
       </div>
 
       {completedProcesses.length > 0 && (
+        <div className="results-table">
+          <h3>Scheduling Results</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Process ID</th>
+                <th>Process Name</th>
+                <th>Arrival Time</th>
+                <th>Burst Time</th>
+                <th>Completion Time</th>
+                <th>Turnaround Time</th>
+                <th>Waiting Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {completedProcesses
+                .sort((a, b) => a.processID - b.processID)
+                .map(process => (
+                  <tr key={process.processID}>
+                    <td>P{process.processID}</td>
+                    <td>{process.owner}</td>
+                    <td>{process.arrivalTime}s</td>
+                    <td>{process.burstTime}s</td>
+                    <td>{process.completionTime}s</td>
+                    <td>{process.turnaroundTime}s</td>
+                    <td>{process.waitingTime}s</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+
+
+      {completedProcesses.length > 0 && (
         <div className="metrics">
           <h3>Scheduling Metrics</h3>
           <div className="metrics-grid">
             <div>Average Waiting Time:</div>
             <div>{metrics.avgWaitingTime}s</div>
-            
+
             <div>Average Turnaround Time:</div>
             <div>{metrics.avgTurnaroundTime}s</div>
-            
+
             <div>Throughput:</div>
             <div>{metrics.throughput} processes/second</div>
           </div>

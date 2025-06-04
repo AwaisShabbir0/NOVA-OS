@@ -1,25 +1,28 @@
 class PCB {
   constructor({
-    owner = "system",
-    priority = 0,
-    burstTime = 1,
-    arrivalTime = 0,
-    processor = "CPU-0",
-    ioState = "Idle"
-  } = {}) {
-    this.processID = null;
-    this.currentState = "New";
+    processID,
+    owner,
+    priority,
+    burstTime,
+    arrivalTime,
+    processor = 'CPU-0',
+    ioRequest = false,
+    currentState = 'new',
+    ioState = 'Idle',
+    memoryRequired = null
+  }) {
+    this.processID = processID ?? null; // <-- ✅ This line is needed
     this.owner = owner;
     this.priority = priority;
     this.burstTime = burstTime;
     this.arrivalTime = arrivalTime;
-    this.memoryRequired = this.calculateMemory();
     this.processor = processor;
+    this.ioRequest = ioRequest;
+    this.currentState = currentState;
     this.ioState = ioState;
-    this.children = [];
-    this.memoryPointer = null;
-    this.cpuRegisters = {};
+    this.memoryRequired = memoryRequired ?? Math.floor(Math.random() * (10 * 1024 - 512 + 1)) + 512; // in KB
   }
+
 
   calculateMemory() {
     // Base 512KB + 128KB per second of burst time

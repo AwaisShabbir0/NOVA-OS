@@ -171,3 +171,28 @@ th {
 .scheduling-btn:hover {
   background: linear-gradient(45deg, #673AB7, #9C27B0) !important;
 }
+
+/* Scrollable modal */
+.modal {
+  max-height: 90vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Checkbox wrapper for alignment */
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Styled checkbox */
+.styled-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb; /* Tailwind blue */
+  cursor: pointer;
+}

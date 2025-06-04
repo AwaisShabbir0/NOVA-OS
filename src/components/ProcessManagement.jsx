@@ -1,28 +1,66 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PCB from '../models/PCB';
 import './ProcessManagement.css';
 
 function ProcessManagement() {
-  const [processes, setProcesses] = useState([]);
+  const [processes, setProcesses] = useState(() => {
+    const saved = localStorage.getItem('pcbProcesses');
+    if (saved) {
+      return JSON.parse(saved).map(data => new PCB(data)); // Restore as PCB instances
+    }
+    return [];
+  });
+
   const [activeModal, setActiveModal] = useState(null);
+
   const [formData, setFormData] = useState({
     owner: '',
     priority: '',
-    burstTime: '1',
-    arrivalTime: '0',
-    processor: 'CPU-0'
+    burstTime: '',
+    arrivalTime: '',
+    processor: 'CPU-0',
+    ioRequest: false // ✅ added
   });
+
   const [selectedProcessID, setSelectedProcessID] = useState('');
+
   const [newPriority, setNewPriority] = useState('');
-  const [nextProcessID, setNextProcessID] = useState(1);
+
+  const [nextProcessID, setNextProcessID] = useState(() => {
+    const savedProcesses = localStorage.getItem('pcbProcesses');
+    const savedID = localStorage.getItem('nextProcessID');
+
+    if (savedProcesses) {
+      const parsed = JSON.parse(savedProcesses);
+      const maxID = parsed.reduce((max, p) => Math.max(max, p.processID), 0);
+      return savedID ? Math.max(parseInt(savedID), maxID + 1) : maxID + 1;
+    }
+
+    return savedID ? parseInt(savedID) : 1;
+  });
+
+
+
+  useEffect(() => {
+    localStorage.setItem('pcbProcesses', JSON.stringify(processes));
+  }, [processes]);
+
+  useEffect(() => {
+    localStorage.setItem('nextProcessID', nextProcessID.toString());
+  }, [nextProcessID]);
+
 
   const processors = ["CPU-0", "CPU-1", "CPU-2", "CPU-3"];
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, type, value, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
   };
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -31,7 +69,8 @@ function ProcessManagement() {
       priority: parseInt(formData.priority),
       burstTime: parseInt(formData.burstTime),
       arrivalTime: parseInt(formData.arrivalTime),
-      processor: formData.processor
+      processor: formData.processor,
+      ioRequest: formData.ioRequest  // ✅ Include this line
     });
 
     newProcess.processID = nextProcessID;
@@ -44,9 +83,11 @@ function ProcessManagement() {
       priority: '',
       burstTime: '1',
       arrivalTime: '0',
-      processor: 'CPU-0'
+      processor: 'CPU-0',
+      ioRequest: false   // ✅ Reset this too
     });
   };
+
 
   const handleDestroyProcess = (e) => {
     e.preventDefault();
@@ -138,6 +179,9 @@ function ProcessManagement() {
     }
   };
 
+
+
+
   return (
     <div className="process-management">
       <h2>Process Management</h2>
@@ -169,7 +213,6 @@ function ProcessManagement() {
                   onChange={handleInputChange}
                   required
                 />
-                <b>Burst time</b>
                 <input
                   type="number"
                   name="burstTime"
@@ -180,7 +223,6 @@ function ProcessManagement() {
                   onChange={handleInputChange}
                   required
                 />
-                <b>Arival Time</b>
                 <input
                   type="number"
                   name="arrivalTime"
@@ -200,6 +242,17 @@ function ProcessManagement() {
                   onChange={handleInputChange}
                   required
                 />
+                <label className="checkbox-wrapper">
+                  <input
+                    type="checkbox"
+                    name="ioRequest"
+                    checked={formData.ioRequest}
+                    onChange={handleInputChange}
+                    className="styled-checkbox"
+                  />
+                  Does this process require I/O?
+                </label>
+
                 <select name="processor" value={formData.processor} onChange={handleInputChange}>
                   {processors.map(proc => <option key={proc} value={proc}>{proc}</option>)}
                 </select>
@@ -378,6 +431,7 @@ function ProcessManagement() {
                   <th>Memory (MB)</th>
                   <th>Processor</th>
                   <th>I/O State</th>
+                  <th>I/O Request</th>
                 </tr>
               </thead>
               <tbody>
@@ -392,6 +446,7 @@ function ProcessManagement() {
                     <td>{Math.round(process.memoryRequired / 1024 * 10) / 10}</td>
                     <td>{process.processor}</td>
                     <td>{process.ioState}</td>
+                    <td>{process.ioRequest ? "Yes" : "No"}</td>
                   </tr>
                 ))}
               </tbody>
