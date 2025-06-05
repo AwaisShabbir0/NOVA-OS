@@ -286,3 +286,18 @@
 .results-table tr:hover {
   background-color: #333;
 }
+
+.metrics {
+  margin-top: 30px;
+  color: #fff;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: #1f1f1f;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #00d4ff;
+}

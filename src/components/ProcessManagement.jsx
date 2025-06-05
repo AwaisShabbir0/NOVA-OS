@@ -256,7 +256,7 @@ function ProcessManagement() {
                 <select name="processor" value={formData.processor} onChange={handleInputChange}>
                   {processors.map(proc => <option key={proc} value={proc}>{proc}</option>)}
                 </select>
-                <button className="btn" type="submit">Add Process</button>
+                <button className="btn-add" type="submit">Add Process</button>
               </form>
             )}
 
@@ -275,7 +275,7 @@ function ProcessManagement() {
                     </option>
                   ))}
                 </select>
-                <button className="btn" type="submit">Destroy</button>
+                <button className="btn-add" type="submit">Destroy</button>
               </form>
             )}
 
@@ -296,7 +296,7 @@ function ProcessManagement() {
                       </option>
                     ))}
                 </select>
-                <button className="btn" type="submit">Suspend Process</button>
+                <button className="btn-add" type="submit">Suspend Process</button>
               </form>
             )}
 
@@ -317,7 +317,7 @@ function ProcessManagement() {
                       </option>
                     ))}
                 </select>
-                <button className="btn" type="submit">Resume Process</button>
+                <button className="btn-add" type="submit">Resume Process</button>
               </form>
             )}
 
@@ -338,7 +338,7 @@ function ProcessManagement() {
                       </option>
                     ))}
                 </select>
-                <button className="btn" type="submit">Block Process</button>
+                <button className="btn-add" type="submit">Block Process</button>
               </form>
             )}
 
@@ -359,7 +359,7 @@ function ProcessManagement() {
                       </option>
                     ))}
                 </select>
-                <button className="btn" type="submit">Wakeup Process</button>
+                <button className="btn-add" type="submit">Wakeup Process</button>
               </form>
             )}
 
@@ -380,7 +380,7 @@ function ProcessManagement() {
                       </option>
                     ))}
                 </select>
-                <button className="btn" type="submit">Dispatch Process</button>
+                <button className="btn-add" type="submit">Dispatch Process</button>
               </form>
             )}
 
@@ -408,7 +408,7 @@ function ProcessManagement() {
                   onChange={(e) => setNewPriority(e.target.value)}
                   required
                 />
-                <button className="btn" type="submit">Update Priority</button>
+                <button className="btn-add" type="submit">Update Priority</button>
               </form>
             )}
           </div>
@@ -459,8 +459,16 @@ function ProcessManagement() {
         FCFS Scheduling
       </Link>
 
+      <Link to="/SJF_Scheduling" state={{ processes }} className="btn scheduling-btn">
+        SJF preemptive Scheduling
+      </Link>
+
       <Link to="/RR_scheduling" state={{ processes }} className="btn scheduling-btn">
         Round Robin Scheduling
+      </Link>
+
+      <Link to="/PriorityScheduling" state={{ processes }} className="btn scheduling-btn">
+        Priority Scheduling
       </Link>
 
       <Link to="/" className="back-btn">⬅ Back to Control Panel</Link>

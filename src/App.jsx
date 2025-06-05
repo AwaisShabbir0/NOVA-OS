@@ -9,6 +9,8 @@ import Configurations from './components/Configurations';
 import Scheduling from './components/Scheduling';
 import logo from './assets/novaos_logo.png';
 import RR_scheduling from "./components/RR_scheduling"
+import SJF_Scheduling from "./components/SJF_Scheduling"
+import PriorityScheduling from "./components/PriorityScheduling"
 
 function App() {
   return (
@@ -25,10 +27,12 @@ function App() {
         <Route path="/process" element={<ProcessManagement />} />
         <Route path="/scheduling" element={<Scheduling />} /> {/* Add this route */}
         <Route path="/RR_scheduling" element={<RR_scheduling />} /> {/* Add this route */}
+        <Route path="/SJF_Scheduling" element={<SJF_Scheduling />} /> {/* Add this route */}
         <Route path="/memory" element={<MemoryManagement />} />
         <Route path="/io" element={<IOManagement />} />
         <Route path="/other" element={<OtherOperations />} />
         <Route path="/config" element={<Configurations />} />
+        <Route path="/PriorityScheduling" element={<PriorityScheduling />} />
       </Routes>
     </div>
   );

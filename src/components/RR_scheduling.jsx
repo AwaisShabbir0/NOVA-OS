@@ -40,102 +40,87 @@ function RRScheduling() {
   }, [location.state]);
 
   // Round Robin simulation logic
-  const runSimulation = () => {
-    setTime(prevTime => {
-      const currentTime = prevTime + 1;
+ const runSimulation = () => {
+  setTime(prevTime => {
+    const currentTime = prevTime + 1;
 
-      // Check for newly arrived processes
-      const newArrivals = processes.filter(p =>
-        p.arrivalTime === currentTime &&
-        !readyQueue.some(q => q.processID === p.processID) &&
-        p !== currentProcess
-      );
-
-      if (newArrivals.length > 0) {
-        setReadyQueue(prev => [...prev, ...newArrivals]);
-        setProcesses(prev => prev.filter(p => !newArrivals.some(n => n.processID === p.processID)));
-      }
-
-      // Check if current process completed or time quantum expired
-      if (currentProcess) {
-        const timeInCPU = currentTime - currentProcess.startTime;
-        const completed = currentProcess.remainingTime <= 0;
-        const quantumExpired = timeInCPU >= timeQuantum && currentProcess.remainingTime > 0;
-
-        if (completed || quantumExpired) {
-          // Process completed
-          if (completed) {
-            const completionTime = currentTime;
-            const turnaroundTime = completionTime - currentProcess.arrivalTime;
-            const waitingTime = turnaroundTime - currentProcess.burstTime;
-
-            setCompletedProcesses(prev => [...prev, {
-              ...currentProcess,
-              completionTime,
-              turnaroundTime,
-              waitingTime
-            }]);
-
-            setExecutionHistory(prev => [...prev, {
-              process: currentProcess,
-              start: currentProcess.startTime,
-              end: completionTime
-            }]);
-          }
-          // Time quantum expired (preempt)
-          else if (quantumExpired) {
-            setReadyQueue(prev => [...prev, {
-              ...currentProcess,
-              remainingTime: currentProcess.remainingTime - timeQuantum,
-              lastPreempted: currentTime
-            }]);
-
-            setExecutionHistory(prev => [...prev, {
-              process: currentProcess,
-              start: currentProcess.startTime,
-              end: currentTime
-            }]);
-          }
-
-          setCurrentProcess(null);
-        }
-      }
-
-      // Select next process if CPU is idle
-      if (!currentProcess && (readyQueue.length > 0 || processes.length > 0)) {
-        const nextProcess = readyQueue.length > 0
-          ? readyQueue[0]
-          : processes.sort((a, b) => a.arrivalTime - b.arrivalTime)[0];
-
-        if (nextProcess) {
-          setCurrentProcess({
-            ...nextProcess,
-            startTime: currentTime,
-            remainingTime: nextProcess.lastPreempted !== null
-              ? nextProcess.remainingTime
-              : nextProcess.burstTime
-          });
-
-          if (readyQueue.length > 0) {
-            setReadyQueue(prev => prev.slice(1));
-          } else {
-            setProcesses(prev => prev.filter(p => p.processID !== nextProcess.processID));
-          }
-        }
-      }
-
-      // Stop simulation if all processes completed
-      if (processes.length === 0 && readyQueue.length === 0 && !currentProcess && completedProcesses.length > 0) {
-        setIsRunning(false);
-      }
-
-      return currentTime;
-    });
-
-    if (isRunning) {
-      timerRef.current = setTimeout(runSimulation, 1000);
+    // Move newly arrived processes to ready queue
+    const newArrivals = processes.filter(p => p.arrivalTime === currentTime);
+    if (newArrivals.length > 0) {
+      setReadyQueue(prev => [...prev, ...newArrivals]);
+      setProcesses(prev => prev.filter(p => !newArrivals.includes(p)));
     }
-  };
+
+    if (currentProcess) {
+      const updatedProcess = {
+        ...currentProcess,
+        remainingTime: currentProcess.remainingTime - 1,
+        quantumUsed: (currentProcess.quantumUsed || 0) + 1
+      };
+
+      // Check if completed
+      if (updatedProcess.remainingTime === 0) {
+        const completionTime = currentTime;
+        const turnaroundTime = completionTime - updatedProcess.arrivalTime;
+        const waitingTime = turnaroundTime - updatedProcess.burstTime;
+
+        setCompletedProcesses(prev => [...prev, {
+          ...updatedProcess,
+          completionTime,
+          turnaroundTime,
+          waitingTime
+        }]);
+
+        setExecutionHistory(prev => [...prev, {
+          process: updatedProcess,
+          start: updatedProcess.startTime,
+          end: currentTime
+        }]);
+
+        setCurrentProcess(null);
+      }
+      // Check if quantum expired
+      else if (updatedProcess.quantumUsed >= timeQuantum) {
+        setExecutionHistory(prev => [...prev, {
+          process: updatedProcess,
+          start: updatedProcess.startTime,
+          end: currentTime
+        }]);
+
+        const { quantumUsed, startTime, ...rest } = updatedProcess;
+
+        setReadyQueue(prev => [...prev, rest]);  // Re-queue
+        setCurrentProcess(null);
+      }
+      else {
+        setCurrentProcess(updatedProcess);
+      }
+    }
+
+    // Assign new process if idle
+    if (!currentProcess && readyQueue.length > 0) {
+      const next = readyQueue[0];
+      setCurrentProcess({
+        ...next,
+        startTime: currentTime,
+        quantumUsed: 0
+      });
+      setReadyQueue(prev => prev.slice(1));
+    }
+
+    if (!currentProcess && readyQueue.length === 0 && processes.length === 0) {
+      setIsRunning(false);
+    }
+
+    return currentTime;
+  });
+
+  if (isRunning) {
+    timerRef.current = setTimeout(runSimulation, 1000);
+  }
+};
+
+
 
   useEffect(() => {
     if (isRunning) {

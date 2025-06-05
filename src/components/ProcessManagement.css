@@ -9,7 +9,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -69,21 +69,42 @@ h2 {
   box-shadow: 0 0 15px #00d4ff;
 }
 
-.create-form, .action-form {
-  display: grid;
-  gap: 1rem;
-  width: 100%;
+.btn-add {
+  background: linear-gradient(45deg, #0077ff, #00d4ff);
+  width: 70%;
+  margin: auto;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.3s;
 }
 
-.create-form h3, .action-form h3 {
+.btn-add:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px #00d4ff;
+}
+
+.create-form,
+.action-form {
+  display: grid;
+  gap: 1rem;
+  width: 400px;
+}
+
+.create-form h3,
+.action-form h3 {
   margin: 0 0 1.5rem 0;
   text-align: center;
   color: #00d4ff;
   font-size: 1.5rem;
 }
 
-input, select {
-  width: 100%;
+input,
+select {
+  width: 85%;
   padding: 12px;
   border: 1px solid #333;
   border-radius: 8px;
@@ -102,7 +123,8 @@ input, select {
   box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
 }
 
-th, td {
+th,
+td {
   padding: 15px;
   border-bottom: 1px solid #333;
   text-align: left;
@@ -130,12 +152,29 @@ th {
 }
 
 /* State-specific colors */
-.state-new { color: #00d4ff; }
-.state-ready { color: #4CAF50; }
-.state-running { color: #FFC107; }
-.state-waiting { color: #FF9800; }
-.state-suspended { color: #F44336; }
-.state-terminated { color: #9E9E9E; }
+.state-new {
+  color: #00d4ff;
+}
+
+.state-ready {
+  color: #4CAF50;
+}
+
+.state-running {
+  color: #FFC107;
+}
+
+.state-waiting {
+  color: #FF9800;
+}
+
+.state-suspended {
+  color: #F44336;
+}
+
+.state-terminated {
+  color: #9E9E9E;
+}
 
 .coming-soon {
   text-align: center;
@@ -148,16 +187,47 @@ th {
 }
 
 /* Priority level styling */
-.priority-0 { color: #757575; }
-.priority-1 { color: #2196F3; }
-.priority-2 { color: #4CAF50; }
-.priority-3 { color: #FFC107; }
-.priority-4 { color: #FF9800; }
-.priority-5 { color: #FF5722; }
-.priority-6 { color: #F44336; }
-.priority-7 { color: #E91E63; }
-.priority-8 { color: #9C27B0; }
-.priority-9 { color: #673AB7; font-weight: bold; }
+.priority-0 {
+  color: #757575;
+}
+
+.priority-1 {
+  color: #2196F3;
+}
+
+.priority-2 {
+  color: #4CAF50;
+}
+
+.priority-3 {
+  color: #FFC107;
+}
+
+.priority-4 {
+  color: #FF9800;
+}
+
+.priority-5 {
+  color: #FF5722;
+}
+
+.priority-6 {
+  color: #F44336;
+}
+
+.priority-7 {
+  color: #E91E63;
+}
+
+.priority-8 {
+  color: #9C27B0;
+}
+
+.priority-9 {
+  color: #673AB7;
+  font-weight: bold;
+}
+
 /* Add to ProcessManagement.css */
 .scheduling-section {
   margin: 30px 0;
@@ -193,6 +263,7 @@ th {
 .styled-checkbox {
   width: 16px;
   height: 16px;
-  accent-color: #2563eb; /* Tailwind blue */
+  accent-color: #2563eb;
+  /* Tailwind blue */
   cursor: pointer;
 }
