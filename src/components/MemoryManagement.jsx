@@ -1,12 +1,34 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-function MemoryManagement() {
+const MemoryManagement = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="text-white p-4">
-      <h1 className="text-3xl font-bold mb-4">Memory Management</h1>
-      <p className="text-lg">Here you can allocate, manage, and simulate memory for processes.</p>
+    <div className="control-panel">
+      <h1>Memory Management</h1>
+      <div className="buttons">
+        <button 
+          className="btn" 
+          onClick={() => navigate('/contiguous')}
+        >
+          Contiguous Allocation
+        </button>
+        <button 
+          className="btn" 
+          onClick={() => navigate('/noncontiguous')}
+        >
+          Non-Contiguous Allocation
+        </button>
+        <button 
+          className="back-btn" 
+          onClick={() => navigate('/')}
+        >
+          Back
+        </button>
+      </div>
     </div>
   );
-}
+};
 
 export default MemoryManagement;

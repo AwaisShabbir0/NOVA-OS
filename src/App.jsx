@@ -3,6 +3,8 @@ import { Route, Routes, Link } from 'react-router-dom';
 import ControlPanel from './components/ControlPanel';
 import ProcessManagement from './components/ProcessManagement';
 import MemoryManagement from './components/MemoryManagement';
+import ContiguousMemory from './components/ContiguousMemory';
+import NonContiguousMemory from './components/NonContiguousMemory';
 import IOManagement from './components/IOManagement';
 import OtherOperations from './components/OtherOperations';
 import Configurations from './components/Configurations';
@@ -29,10 +31,13 @@ function App() {
         <Route path="/RR_scheduling" element={<RR_scheduling />} /> {/* Add this route */}
         <Route path="/SJF_Scheduling" element={<SJF_Scheduling />} /> {/* Add this route */}
         <Route path="/memory" element={<MemoryManagement />} />
+        <Route path="/contiguous" element={<ContiguousMemory />} />
+        <Route path="/noncontiguous" element={<NonContiguousMemory />} />
         <Route path="/io" element={<IOManagement />} />
         <Route path="/other" element={<OtherOperations />} />
         <Route path="/config" element={<Configurations />} />
         <Route path="/PriorityScheduling" element={<PriorityScheduling />} />
+        
       </Routes>
     </div>
   );
