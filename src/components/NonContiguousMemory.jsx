@@ -9,8 +9,8 @@ const NonContiguousMemory = () => {
   const totalMemoryRef = useRef();
 
   const [physicalMemory, setPhysicalMemory] = useState([]);
-  const [totalMemory, setTotalMemory] = useState(0);
-  const [pageSize, setPageSize] = useState(0);
+  const [totalMemoryBytes, setTotalMemoryBytes] = useState(0);
+  const [pageSizeBytes, setPageSizeBytes] = useState(0);
   const [memoryInitialized, setMemoryInitialized] = useState(false);
 
   const [processes, setProcesses] = useState([]);
@@ -18,18 +18,19 @@ const NonContiguousMemory = () => {
   const [currentFramePage, setCurrentFramePage] = useState(0);
 
   const initializeMemory = () => {
-    const pageSizeInput = parseInt(pageSizeRef.current.value);
-    const totalMemoryInput = parseInt(totalMemoryRef.current.value);
+    const pageSize = parseInt(pageSizeRef.current.value);
+    const totalMemory = parseInt(totalMemoryRef.current.value);
 
-    if (isNaN(pageSizeInput) || isNaN(totalMemoryInput) || pageSizeInput <= 0 || totalMemoryInput <= 0) {
-      alert('Please enter valid Page Size and Total Memory Size in KB');
+    if (isNaN(pageSize) || isNaN(totalMemory) || pageSize <= 0 || totalMemory <= 0) {
+      alert('Please enter valid Page Size and Total Memory Size in BYTES');
       return;
     }
 
-    const totalFrames = Math.floor(totalMemoryInput / pageSizeInput);
+    const totalFrames = Math.floor(totalMemory / pageSize);
+
     setPhysicalMemory(Array(totalFrames).fill(null));
-    setPageSize(pageSizeInput);
-    setTotalMemory(totalMemoryInput);
+    setPageSizeBytes(pageSize);
+    setTotalMemoryBytes(totalMemory);
     setMemoryInitialized(true);
     alert(`Memory Initialized: ${totalFrames} frames`);
   };
@@ -48,7 +49,7 @@ const NonContiguousMemory = () => {
       return;
     }
 
-    const pagesNeeded = Math.ceil(memoryReq / pageSize);
+    const pagesNeeded = Math.ceil(memoryReq / pageSizeBytes);
     const availableFrames = physicalMemory.filter(frame => frame === null).length;
 
     if (availableFrames < pagesNeeded) {
@@ -70,7 +71,8 @@ const NonContiguousMemory = () => {
     setPageTables({
       ...pageTables,
       [processId]: {
-        pageSize,
+        pageSize: pageSizeBytes,
+        processSize: memoryReq,
         pages: allocatedFrames.map((frame, index) => ({
           page: index,
           frame
@@ -94,6 +96,10 @@ const NonContiguousMemory = () => {
     setPageTables(newPageTables);
   };
 
+  const calculateBits = (value) => {
+    return Math.ceil(Math.log2(value));
+  };
+
   return (
     <div className="paging-container">
       <header className="paging-header">
@@ -102,11 +108,11 @@ const NonContiguousMemory = () => {
           <div className="memory-info">
             <div className="info-item">
               <span className="info-label">Total Memory:</span>
-              <span className="info-value">{totalMemory} KB</span>
+              <span className="info-value">{totalMemoryBytes} Bytes</span>
             </div>
             <div className="info-item">
               <span className="info-label">Page Size:</span>
-              <span className="info-value">{pageSize} KB</span>
+              <span className="info-value">{pageSizeBytes} Bytes</span>
             </div>
             <div className="info-item">
               <span className="info-label">Frames:</span>
@@ -119,23 +125,9 @@ const NonContiguousMemory = () => {
       {!memoryInitialized && (
         <section className="allocation-controls">
           <div className="input-group">
-            <input
-              type="number"
-              ref={totalMemoryRef}
-              placeholder="Total Memory Size (KB)"
-              className="form-input"
-              min="1"
-            />
-            <input
-              type="number"
-              ref={pageSizeRef}
-              placeholder="Page Size (KB)"
-              className="form-input"
-              min="1"
-            />
-            <button className="primary-btn" onClick={initializeMemory}>
-              Initialize Memory
-            </button>
+            <input type="number" ref={totalMemoryRef} placeholder="Total Memory (Bytes)" className="form-input" min="1" />
+            <input type="number" ref={pageSizeRef} placeholder="Page Size (Bytes)" className="form-input" min="1" />
+            <button className="primary-btn" onClick={initializeMemory}>Initialize Memory</button>
           </div>
         </section>
       )}
@@ -144,23 +136,37 @@ const NonContiguousMemory = () => {
         <>
           <section className="allocation-controls">
             <div className="input-group">
-              <input
-                type="text"
-                ref={processIdRef}
-                placeholder="Process ID"
-                className="form-input"
-              />
-              <input
-                type="number"
-                ref={memoryReqRef}
-                placeholder="Process Size (KB)"
-                className="form-input"
-                min="1"
-              />
-              <button className="primary-btn" onClick={allocateProcess}>
-                Allocate Process
-              </button>
+              <input type="text" ref={processIdRef} placeholder="Process ID" className="form-input" />
+              <input type="number" ref={memoryReqRef} placeholder="Process Size (Bytes)" className="form-input" min="1" />
+              <button className="primary-btn" onClick={allocateProcess}>Allocate Process</button>
             </div>
+          </section>
+
+          <section className="logical-physical-table">
+            <h2 className="section-title">Address Bits per Process</h2>
+            <table className="info-table">
+              <thead>
+                <tr>
+                  <th>Process ID</th>
+                  <th>Logical Address Bits</th>
+                  <th>Physical Address Bits</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(pageTables).map(([pid, table]) => {
+                  const logicalBits = calculateBits(table.processSize);
+                  const physicalBits = calculateBits(totalMemoryBytes);
+
+                  return (
+                    <tr key={pid}>
+                      <td>{pid}</td>
+                      <td>{logicalBits}</td>
+                      <td>{physicalBits}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </section>
 
           <section className="frame-section">
@@ -185,10 +191,7 @@ const NonContiguousMemory = () => {
                 .map((frame, index) => {
                   const frameNumber = currentFramePage * 16 + index;
                   return (
-                    <div
-                      key={frameNumber}
-                      className={`memory-frame ${frame ? 'allocated' : 'free'}`}
-                    >
+                    <div key={frameNumber} className={`memory-frame ${frame ? 'allocated' : 'free'}`}>
                       <div className="frame-number">Frame {frameNumber}</div>
                       <div className="frame-status">
                         {frame || <span className="free-label">FREE</span>}
@@ -206,12 +209,13 @@ const NonContiguousMemory = () => {
                 <div key={pid} className="page-table-card">
                   <div className="table-header">
                     <span className="process-id">{pid}</span>
-                    <span className="page-size">{table.pageSize} KB Pages</span>
+                    <span className="page-size">{table.pageSize} Bytes/Page</span>
+                    <span className="total-pages">Total Pages: {table.pages.length}</span>
                   </div>
                   <div className="table-container">
                     <div className="table-row header">
-                      <div>Page #</div>
-                      <div>Frame #</div>
+                      <div>Page #no</div>
+                      <div>Frame #no</div>
                     </div>
                     {table.pages.map(({ page, frame }) => (
                       <div key={page} className="table-row">
@@ -220,12 +224,7 @@ const NonContiguousMemory = () => {
                       </div>
                     ))}
                   </div>
-                  <button
-                    className="deallocate-btn"
-                    onClick={() => deallocateProcess(pid)}
-                  >
-                    Deallocate
-                  </button>
+                  <button className="deallocate-btn" onClick={() => deallocateProcess(pid)}>Deallocate</button>
                 </div>
               ))}
             </div>
