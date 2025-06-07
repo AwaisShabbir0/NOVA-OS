@@ -1,9 +1,8 @@
-
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { firstFit, bestFit, worstFit, deallocate } from '../models/contiguous';
 
-const ContiguousMemory = () => {
+const FixedSized = () => {
   const navigate = useNavigate();
   const processSizeRef = useRef();
   const memoryBlockRef = useRef();
@@ -14,7 +13,7 @@ const ContiguousMemory = () => {
   const [totalMemory, setTotalMemory] = useState(0);
 
   const handleAddMemoryBlock = () => {
-    const blockSize = parseInt(memoryBlockRef.current.value); 
+    const blockSize = parseInt(memoryBlockRef.current.value);
     if (isNaN(blockSize)) {
       alert('Please enter valid block size in KB');
       return;
@@ -77,7 +76,7 @@ const ContiguousMemory = () => {
 
   return (
     <div className="contiguous-container">
-      <h1 className="memory-header">Contiguous Memory Allocation</h1>
+      <h1 className="memory-header">Fixed sized partitioning</h1>
 
       <div className="controls-panel">
         <div className="input-group">
@@ -88,7 +87,7 @@ const ContiguousMemory = () => {
             className="process-input"
             min="1"
           />
-          <button 
+          <button
             className="action-btn"
             onClick={handleAddMemoryBlock}
             style={{ background: 'linear-gradient(135deg, #00cc00, #009900)' }}
@@ -117,7 +116,7 @@ const ContiguousMemory = () => {
                 className="process-input"
                 min="1"
               />
-              <button 
+              <button
                 className="action-btn"
                 onClick={handleAllocate}
               >
@@ -136,7 +135,7 @@ const ContiguousMemory = () => {
                   <option key={pid} value={pid}>{pid}</option>
                 ))}
               </select>
-              <button 
+              <button
                 className="action-btn"
                 onClick={handleDeallocate}
                 style={{ background: 'linear-gradient(135deg, #ff4444, #ff0000)' }}
@@ -156,7 +155,7 @@ const ContiguousMemory = () => {
               <div
                 key={index}
                 className={`memory-block ${block.allocated ? 'allocated' : 'free-block'}`}
-                style={{ 
+                style={{
                   width: `${(block.size / totalMemory) * 100}%`,
                   backgroundColor: block.allocated ? block.color : '#ccc'
                 }}
@@ -176,11 +175,10 @@ const ContiguousMemory = () => {
           </div>
         </>
       )}
-
       <button
         className="action-btn"
         onClick={() => navigate('/memory')}
-        style={{ 
+        style={{
           background: 'linear-gradient(135deg, #ff4444, #ff0000)',
           margin: '0 auto',
           display: 'block'
@@ -192,4 +190,4 @@ const ContiguousMemory = () => {
   );
 };
 
-export default ContiguousMemory;
+export default FixedSized;
