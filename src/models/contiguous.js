@@ -41,11 +41,18 @@ export const worstFit = (memory, size, processId) => {
   return worstIndex !== -1 ? splitBlock(memory, worstIndex, size, processId) : memory;
 };
 
-export const deallocate = (memory, processId) => {
-  const updatedMemory = memory.map(block => 
-    block.processId === processId ? { ...block, allocated: false, processId: null, color: null } : block
+export const deallocate = (memory, processId, coalesce = true) => {
+  const updatedMemory = memory.map(block =>
+    block.processId === processId
+      ? { ...block, allocated: false, processId: null, color: null }
+      : block
   );
 
+  if (!coalesce) {
+    return updatedMemory; // No merging for fixed partitioning
+  }
+
+  // Coalesce adjacent free blocks for variable partitioning
   return updatedMemory.reduce((acc, block) => {
     const lastBlock = acc[acc.length - 1];
     if (lastBlock && !lastBlock.allocated && !block.allocated) {
@@ -57,6 +64,7 @@ export const deallocate = (memory, processId) => {
   }, []);
 };
 
+
 const splitBlock = (memory, index, size, processId) => {
   const newBlocks = [...memory];
   const originalBlock = newBlocks[index];
@@ -66,7 +74,7 @@ const splitBlock = (memory, index, size, processId) => {
     size: size,
     allocated: true,
     processId,
-    color: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`
+    color: `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`
   };
 
   const remaining = originalBlock.size - size;

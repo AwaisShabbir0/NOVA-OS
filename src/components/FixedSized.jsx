@@ -68,7 +68,7 @@ const FixedSized = () => {
       return;
     }
 
-    const newMemory = deallocate([...memory], selectedProcess);
+    const newMemory = deallocate([...memory], selectedProcess, false);
     setMemory(newMemory);
     setProcesses(processes.filter(p => p !== selectedProcess));
     setSelectedProcess('');
