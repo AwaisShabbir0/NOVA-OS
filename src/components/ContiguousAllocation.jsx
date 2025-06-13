@@ -10,7 +10,7 @@ const ContiguousAllocation = () => {
       <div className="buttons">
         <button
           className="btn"
-          onClick={() => navigate('/FixedSized')}
+           onClick={() => navigate('/FixedSized')}
         >
           Fixed sized Partitioning
         </button>
