@@ -28,8 +28,19 @@ function RRScheduling() {
         quantumUsed: 0
       }));
 
+<<<<<<< HEAD
       setProcesses(initialProcesses.filter(p => p.arrivalTime > 0));
       setReadyQueue(initialProcesses.filter(p => p.arrivalTime <= 0));
+=======
+      setProcesses(initialProcesses);
+
+      // Initialize ready queue with processes that have arrivalTime <= 0
+      const initialReady = initialProcesses.filter(p => p.arrivalTime <= 0);
+      setReadyQueue(initialReady);
+
+      // Remove these processes from the main processes list
+      setProcesses(prev => prev.filter(p => p.arrivalTime > 0));
+>>>>>>> 1546fcf387707404fdc234019a761aaff1d3a108
     }
   }, [location.state]);
 
@@ -37,6 +48,7 @@ function RRScheduling() {
   const runSimulation = () => {
     setTime(prevTime => {
       const currentTime = prevTime + 1;
+<<<<<<< HEAD
       let newProcesses = [...processes];
       let newReadyQueue = [...readyQueue];
       let newCurrentProcess = currentProcess;
@@ -48,6 +60,19 @@ function RRScheduling() {
       if (arrivals.length > 0) {
         newReadyQueue = [...newReadyQueue, ...arrivals];
         newProcesses = newProcesses.filter(p => !arrivals.includes(p));
+=======
+
+      // Check for newly arrived processes
+      const newArrivals = processes.filter(p =>
+        p.arrivalTime === currentTime &&
+        !readyQueue.some(q => q.processID === p.processID) &&
+        p !== currentProcess
+      );
+
+      if (newArrivals.length > 0) {
+        setReadyQueue(prev => [...prev, ...newArrivals]);
+        setProcesses(prev => prev.filter(p => !newArrivals.some(n => n.processID === p.processID)));
+>>>>>>> 1546fcf387707404fdc234019a761aaff1d3a108
       }
 
       // Process current CPU task
@@ -163,7 +188,12 @@ function RRScheduling() {
       setCompletedProcesses([]);
       setExecutionHistory([]);
 
+<<<<<<< HEAD
       if (readyQueue.length > 0) {
+=======
+      if (!currentProcess && readyQueue.length > 0) {
+        const nextProcess = readyQueue[0];
+>>>>>>> 1546fcf387707404fdc234019a761aaff1d3a108
         setCurrentProcess({
           ...readyQueue[0],
           startTime: 0,
@@ -334,6 +364,7 @@ function RRScheduling() {
       </div>
 
       {completedProcesses.length > 0 && (
+<<<<<<< HEAD
         <div className="results">
           <div className="results-table">
             <h3>Process Results</h3>
@@ -375,6 +406,55 @@ function RRScheduling() {
               <div>Throughput:</div>
               <div>{metrics.throughput} processes/second</div>
             </div>
+=======
+        <div className="results-table">
+          <h3>Scheduling Results</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Process ID</th>
+                <th>Process Name</th>
+                <th>Arrival Time</th>
+                <th>Burst Time</th>
+                <th>Completion Time</th>
+                <th>Turnaround Time</th>
+                <th>Waiting Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {completedProcesses
+                .sort((a, b) => a.processID - b.processID)
+                .map(process => (
+                  <tr key={process.processID}>
+                    <td>P{process.processID}</td>
+                    <td>{process.owner}</td>
+                    <td>{process.arrivalTime}s</td>
+                    <td>{process.burstTime}s</td>
+                    <td>{process.completionTime}s</td>
+                    <td>{process.turnaroundTime}s</td>
+                    <td>{process.waitingTime}s</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+
+
+      {completedProcesses.length > 0 && (
+        <div className="metrics">
+          <h3>Scheduling Metrics</h3>
+          <div className="metrics-grid">
+            <div>Average Waiting Time:</div>
+            <div>{metrics.avgWaitingTime}s</div>
+
+            <div>Average Turnaround Time:</div>
+            <div>{metrics.avgTurnaroundTime}s</div>
+
+            <div>Throughput:</div>
+            <div>{metrics.throughput} processes/second</div>
+>>>>>>> 1546fcf387707404fdc234019a761aaff1d3a108
           </div>
         </div>
       )}
