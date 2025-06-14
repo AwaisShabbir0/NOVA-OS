@@ -423,7 +423,7 @@ function RRScheduling() {
             <div>Average Turnaround Time:</div>
             <div>{metrics.avgTurnaroundTime}s</div>
 
-            <div>Throughput:</div>
+            <div>Throughput:</div> 
             <div>{metrics.throughput} processes/second</div>
 
           </div>
