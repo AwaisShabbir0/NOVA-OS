@@ -22,7 +22,8 @@ function PriorityScheduling() {
     if (location.state?.processes) {
       const initialized = location.state.processes.map(p => ({
         ...p,
-        remainingTime: p.burstTime
+        remainingTime: p.burstTime,
+        isScheduled: false
       }));
       setProcesses(initialized);
     }
@@ -32,22 +33,21 @@ function PriorityScheduling() {
     setTime(prevTime => {
       const currentTime = prevTime + 1;
 
-      // Add new arrivals to readyQueue
-      const arrivals = processes.filter(p => p.arrivalTime === currentTime);
-      if (arrivals.length > 0) {
-        setReadyQueue(prev => [...prev, ...arrivals]);
-        setProcesses(prev => prev.filter(p => !arrivals.includes(p)));
+      // Move newly arrived processes into readyQueue
+      const arrivedNow = processes.filter(p => p.arrivalTime <= currentTime);
+      if (arrivedNow.length > 0) {
+        setReadyQueue(prev => [...prev, ...arrivedNow]);
+        setProcesses(prev => prev.filter(p => !arrivedNow.includes(p)));
       }
 
       if (!currentProcess && readyQueue.length > 0) {
-        // Sort by priority (lower number = higher priority), then by arrival time
-        const sorted = [...readyQueue].sort((a, b) => {
+        const sortedQueue = [...readyQueue].sort((a, b) => {
           if (a.priority !== b.priority) return a.priority - b.priority;
           return a.arrivalTime - b.arrivalTime;
         });
-        const next = sorted[0];
-        setCurrentProcess({ ...next, startTime: currentTime });
-        setReadyQueue(prev => prev.filter(p => p.processID !== next.processID));
+        const nextProcess = sortedQueue[0];
+        setCurrentProcess({ ...nextProcess, startTime: currentTime });
+        setReadyQueue(prev => prev.filter(p => p.processID !== nextProcess.processID));
       }
 
       if (currentProcess) {
@@ -56,16 +56,19 @@ function PriorityScheduling() {
           const completionTime = currentTime;
           const turnaroundTime = completionTime - currentProcess.arrivalTime;
           const waitingTime = turnaroundTime - currentProcess.burstTime;
-          setCompletedProcesses(prev => [...prev, {
+
+          const completed = {
             ...currentProcess,
             completionTime,
             turnaroundTime,
             waitingTime
-          }]);
+          };
+
+          setCompletedProcesses(prev => [...prev, completed]);
           setExecutionHistory(prev => [...prev, {
             process: currentProcess,
             start: currentProcess.startTime,
-            end: currentTime
+            end: completionTime
           }]);
           setCurrentProcess(null);
         } else {
@@ -76,50 +79,55 @@ function PriorityScheduling() {
         }
       }
 
+      // Check if simulation should stop
+      if (processes.length === 0 && readyQueue.length === 0 && currentProcess === null) {
+        setIsRunning(false);
+      }
+
       return currentTime;
     });
-
-    if (isRunning) {
-      timerRef.current = setTimeout(runSimulation, 1000);
-    }
   };
 
   useEffect(() => {
     if (isRunning) {
       timerRef.current = setTimeout(runSimulation, 1000);
     } else {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    }
+      clearTimeout(timerRef.current);
+      // Calculate metrics when simulation stops
+      if (completedProcesses.length > 0) {
+        const totalWaiting = completedProcesses.reduce((sum, p) => sum + p.waitingTime, 0);
+        const totalTurnaround = completedProcesses.reduce((sum, p) => sum + p.turnaroundTime, 0);
+        const lastCompletion = Math.max(...completedProcesses.map(p => p.completionTime));
 
+        setMetrics({
+          avgWaitingTime: (totalWaiting / completedProcesses.length).toFixed(2),
+          avgTurnaroundTime: (totalTurnaround / completedProcesses.length).toFixed(2),
+          throughput: (completedProcesses.length / lastCompletion).toFixed(2)
+        });
+      }
+    }
     return () => clearTimeout(timerRef.current);
-  }, [isRunning, processes, readyQueue, currentProcess]);
-
-  useEffect(() => {
-    if (!isRunning && processes.length === 0 && readyQueue.length === 0 && !currentProcess && completedProcesses.length > 0) {
-      const totalWaiting = completedProcesses.reduce((sum, p) => sum + p.waitingTime, 0);
-      const totalTurnaround = completedProcesses.reduce((sum, p) => sum + p.turnaroundTime, 0);
-      setMetrics({
-        avgWaitingTime: (totalWaiting / completedProcesses.length).toFixed(2),
-        avgTurnaroundTime: (totalTurnaround / completedProcesses.length).toFixed(2),
-        throughput: (completedProcesses.length / time).toFixed(2)
-      });
-    }
-  }, [isRunning, completedProcesses, processes, readyQueue, time, currentProcess]);
+  }, [isRunning, currentProcess, readyQueue, processes, completedProcesses]);
 
   const startSimulation = () => {
-    if (processes.length > 0 || readyQueue.length > 0) {
-      setIsRunning(true);
-      setTime(0);
-      setCompletedProcesses([]);
-      setExecutionHistory([]);
-      setCurrentProcess(null);
+    setIsRunning(true);
+    setTime(0);
+    setCompletedProcesses([]);
+    setExecutionHistory([]);
+    setCurrentProcess(null);
+    if (location.state?.processes) {
+      const initialized = location.state.processes.map(p => ({
+        ...p,
+        remainingTime: p.burstTime,
+        isScheduled: false
+      }));
+      setProcesses(initialized);
     }
   };
 
   const resetSimulation = () => {
     setIsRunning(false);
     setTime(0);
-    setProcesses([]);
     setReadyQueue([]);
     setCompletedProcesses([]);
     setExecutionHistory([]);
@@ -127,7 +135,8 @@ function PriorityScheduling() {
     if (location.state?.processes) {
       const initialized = location.state.processes.map(p => ({
         ...p,
-        remainingTime: p.burstTime
+        remainingTime: p.burstTime,
+        isScheduled: false
       }));
       setProcesses(initialized);
     }
@@ -159,8 +168,7 @@ function PriorityScheduling() {
                 width: `${(item.end - item.start) * 30}px`,
                 backgroundColor: getProcessColor(item.process.processID)
               }}
-              title={`P${item.process.processID} (${item.start}s-${item.end}s)`}
-            >
+              title={`P${item.process.processID} (${item.start}s-${item.end}s)`}>
               <span>P{item.process.processID}</span>
               <span className="gantt-time">{item.start}s-{item.end}s</span>
             </div>

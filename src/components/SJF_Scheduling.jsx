@@ -255,6 +255,17 @@ function SJFScheduling() {
           </table>
         </div>
       )}
+      {!isRunning && completedProcesses.length > 0 && (
+  <div className="metrics-container">
+    <h3 className="metrics-heading">Scheduling Metrics</h3>
+    <div className="metrics-box">
+      <p><strong>Average Waiting Time:</strong> {metrics.avgWaitingTime}s</p>
+      <p><strong>Average Turnaround Time:</strong> {metrics.avgTurnaroundTime}s</p>
+      <p><strong>Throughput:</strong> {metrics.throughput} processes/second</p>
+    </div>
+  </div>
+)}
+
 
       <Link to="/process" className="back-btn">⬅ Back to Process Management</Link>
     </div>

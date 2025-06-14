@@ -25,132 +25,136 @@ function RRScheduling() {
       const initialProcesses = location.state.processes.map(p => ({
         ...p,
         remainingTime: p.burstTime,
-        lastPreempted: null
+        quantumUsed: 0
       }));
 
-      setProcesses(initialProcesses);
-
-      // Initialize ready queue with processes that have arrivalTime <= 0
-      const initialReady = initialProcesses.filter(p => p.arrivalTime <= 0);
-      setReadyQueue(initialReady);
-
-      // Remove these processes from the main processes list
-      setProcesses(prev => prev.filter(p => p.arrivalTime > 0));
+      setProcesses(initialProcesses.filter(p => p.arrivalTime > 0));
+      setReadyQueue(initialProcesses.filter(p => p.arrivalTime <= 0));
     }
   }, [location.state]);
 
-  // Round Robin simulation logic
- const runSimulation = () => {
-  setTime(prevTime => {
-    const currentTime = prevTime + 1;
+  // Corrected Round Robin simulation logic
+  const runSimulation = () => {
+    setTime(prevTime => {
+      const currentTime = prevTime + 1;
+      let newProcesses = [...processes];
+      let newReadyQueue = [...readyQueue];
+      let newCurrentProcess = currentProcess;
+      let newCompletedProcesses = [...completedProcesses];
+      let newExecutionHistory = [...executionHistory];
 
-    // Move newly arrived processes to ready queue
-    const newArrivals = processes.filter(p => p.arrivalTime === currentTime);
-    if (newArrivals.length > 0) {
-      setReadyQueue(prev => [...prev, ...newArrivals]);
-      setProcesses(prev => prev.filter(p => !newArrivals.includes(p)));
-    }
-
-    if (currentProcess) {
-      const updatedProcess = {
-        ...currentProcess,
-        remainingTime: currentProcess.remainingTime - 1,
-        quantumUsed: (currentProcess.quantumUsed || 0) + 1
-      };
-
-      // Check if completed
-      if (updatedProcess.remainingTime === 0) {
-        const completionTime = currentTime;
-        const turnaroundTime = completionTime - updatedProcess.arrivalTime;
-        const waitingTime = turnaroundTime - updatedProcess.burstTime;
-
-        setCompletedProcesses(prev => [...prev, {
-          ...updatedProcess,
-          completionTime,
-          turnaroundTime,
-          waitingTime
-        }]);
-
-        setExecutionHistory(prev => [...prev, {
-          process: updatedProcess,
-          start: updatedProcess.startTime,
-          end: currentTime
-        }]);
-
-        setCurrentProcess(null);
+      // Add newly arrived processes to ready queue
+      const arrivals = newProcesses.filter(p => p.arrivalTime === currentTime);
+      if (arrivals.length > 0) {
+        newReadyQueue = [...newReadyQueue, ...arrivals];
+        newProcesses = newProcesses.filter(p => !arrivals.includes(p));
       }
-      // Check if quantum expired
-      else if (updatedProcess.quantumUsed >= timeQuantum) {
-        setExecutionHistory(prev => [...prev, {
-          process: updatedProcess,
-          start: updatedProcess.startTime,
-          end: currentTime
-        }]);
 
-        const { quantumUsed, startTime, ...rest } = updatedProcess;
+      // Process current CPU task
+      if (newCurrentProcess) {
+        const updatedProcess = {
+          ...newCurrentProcess,
+          remainingTime: newCurrentProcess.remainingTime - 1,
+          quantumUsed: newCurrentProcess.quantumUsed + 1
+        };
 
-        setReadyQueue(prev => [...prev, rest]);  // Re-queue
-        setCurrentProcess(null);
+        // Check if process completed
+        if (updatedProcess.remainingTime <= 0) {
+          const completionTime = currentTime;
+          const turnaroundTime = completionTime - updatedProcess.arrivalTime;
+          const waitingTime = turnaroundTime - updatedProcess.burstTime;
+
+          newCompletedProcesses.push({
+            ...updatedProcess,
+            completionTime,
+            turnaroundTime,
+            waitingTime
+          });
+
+          newExecutionHistory.push({
+            process: updatedProcess,
+            start: updatedProcess.startTime || currentTime - 1,
+            end: currentTime
+          });
+
+          newCurrentProcess = null;
+        } 
+        // Check if quantum expired
+        else if (updatedProcess.quantumUsed >= timeQuantum) {
+          newExecutionHistory.push({
+            process: updatedProcess,
+            start: updatedProcess.startTime || currentTime - updatedProcess.quantumUsed,
+            end: currentTime
+          });
+
+          // Put back in ready queue
+          const requeuedProcess = {
+            ...updatedProcess,
+            quantumUsed: 0
+          };
+          newReadyQueue.push(requeuedProcess);
+          newCurrentProcess = null;
+        } else {
+          newCurrentProcess = updatedProcess;
+        }
       }
-      else {
-        setCurrentProcess(updatedProcess);
+
+      // Schedule new process if CPU is idle and ready queue not empty
+      if (!newCurrentProcess && newReadyQueue.length > 0) {
+        newCurrentProcess = {
+          ...newReadyQueue[0],
+          startTime: currentTime,
+          quantumUsed: 0
+        };
+        newReadyQueue = newReadyQueue.slice(1);
       }
+
+      // Update all states
+      setProcesses(newProcesses);
+      setCurrentProcess(newCurrentProcess);
+      setReadyQueue(newReadyQueue);
+      setCompletedProcesses(newCompletedProcesses);
+      setExecutionHistory(newExecutionHistory);
+
+      // Stop simulation if all processes are done
+      if (!newCurrentProcess && newReadyQueue.length === 0 && newProcesses.length === 0) {
+        setIsRunning(false);
+      }
+
+      return currentTime;
+    });
+
+    if (isRunning) {
+      timerRef.current = setTimeout(runSimulation, 1000);
     }
-
-    // Assign new process if idle
-    if (!currentProcess && readyQueue.length > 0) {
-      const next = readyQueue[0];
-      setCurrentProcess({
-        ...next,
-        startTime: currentTime,
-        quantumUsed: 0
-      });
-      setReadyQueue(prev => prev.slice(1));
-    }
-
-    if (!currentProcess && readyQueue.length === 0 && processes.length === 0) {
-      setIsRunning(false);
-    }
-
-    return currentTime;
-  });
-
-  if (isRunning) {
-    timerRef.current = setTimeout(runSimulation, 1000);
-  }
-};
-
-
+  };
 
   useEffect(() => {
     if (isRunning) {
       timerRef.current = setTimeout(runSimulation, 1000);
     } else {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+      clearTimeout(timerRef.current);
     }
 
     return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+      clearTimeout(timerRef.current);
     };
   }, [isRunning, processes, currentProcess, readyQueue, timeQuantum]);
 
   // Calculate metrics when simulation completes
   useEffect(() => {
-    if (processes.length === 0 && readyQueue.length === 0 && !currentProcess && completedProcesses.length > 0) {
+    if (!isRunning && completedProcesses.length > 0) {
       const totalWaiting = completedProcesses.reduce((sum, p) => sum + p.waitingTime, 0);
       const totalTurnaround = completedProcesses.reduce((sum, p) => sum + p.turnaroundTime, 0);
+      const lastCompletion = Math.max(...completedProcesses.map(p => p.completionTime));
 
       setMetrics({
         avgWaitingTime: (totalWaiting / completedProcesses.length).toFixed(2),
         avgTurnaroundTime: (totalTurnaround / completedProcesses.length).toFixed(2),
-        throughput: (completedProcesses.length / time).toFixed(2)
+        throughput: (completedProcesses.length / lastCompletion).toFixed(2)
       });
     }
-  }, [processes, currentProcess, completedProcesses, time, readyQueue]);
+  }, [isRunning, completedProcesses]);
 
   const startSimulation = () => {
     if (processes.length > 0 || readyQueue.length > 0) {
@@ -159,11 +163,11 @@ function RRScheduling() {
       setCompletedProcesses([]);
       setExecutionHistory([]);
 
-      if (!currentProcess && readyQueue.length > 0) {
-        const nextProcess = readyQueue[0];
+      if (readyQueue.length > 0) {
         setCurrentProcess({
-          ...nextProcess,
-          startTime: 0
+          ...readyQueue[0],
+          startTime: 0,
+          quantumUsed: 0
         });
         setReadyQueue(prev => prev.slice(1));
       }
@@ -172,23 +176,26 @@ function RRScheduling() {
 
   const resetSimulation = () => {
     setIsRunning(false);
+    clearTimeout(timerRef.current);
     setTime(0);
     setCurrentProcess(null);
     setReadyQueue([]);
     setCompletedProcesses([]);
     setExecutionHistory([]);
     if (location.state?.processes) {
-      setProcesses(location.state.processes.map(p => ({
+      const initialProcesses = location.state.processes.map(p => ({
         ...p,
         remainingTime: p.burstTime,
-        lastPreempted: null
-      })));
+        quantumUsed: 0
+      }));
+      setProcesses(initialProcesses.filter(p => p.arrivalTime > 0));
+      setReadyQueue(initialProcesses.filter(p => p.arrivalTime <= 0));
     }
   };
 
   const handleTimeQuantumChange = (e) => {
     const newQuantum = parseInt(e.target.value);
-    if (newQuantum > 0) {
+    if (newQuantum > 0 && !isRunning) {
       setTimeQuantum(newQuantum);
     }
   };
@@ -207,7 +214,8 @@ function RRScheduling() {
     <div className="scheduling">
       <h2>Process Scheduling (Round Robin)</h2>
 
-      <div className="controls">
+     
+        <div className="controls">
         <div className="time-quantum-control" style={{
           marginRight: '10px',
           display: 'flex',
@@ -235,16 +243,10 @@ function RRScheduling() {
           <span style={{ color: '#aaa' }}>seconds</span>
         </div>
 
-        <button
-          className="btn"
-          onClick={startSimulation}
-          disabled={isRunning || (processes.length === 0 && readyQueue.length === 0)}
-        >
+        <button className="btn" onClick={startSimulation} disabled={isRunning}>
           {isRunning ? 'Running...' : 'Start Simulation'}
         </button>
-        <button className="btn" onClick={resetSimulation}>
-          Reset
-        </button>
+        <button className="btn" onClick={resetSimulation}>Reset</button>
         <div className="time-display">Time: {time}s</div>
       </div>
 
@@ -269,18 +271,18 @@ function RRScheduling() {
             <div
               className="gantt-item current"
               style={{
-                width: `${(time - currentProcess.startTime) * 30}px`,
+                width: `${30}px`,
                 backgroundColor: getProcessColor(currentProcess.processID)
               }}
               title={`P${currentProcess.processID} (${currentProcess.startTime}s-?)`}
             >
               <span>P{currentProcess.processID}</span>
-              <span className="gantt-time">{currentProcess.startTime}s-?</span>
+              <span className="gantt-time">{currentProcess.startTime}s</span>
             </div>
           )}
         </div>
         <div className="gantt-timeline">
-          {Array.from({ length: time + 5 }).map((_, i) => (
+          {Array.from({ length: time + 2 }).map((_, i) => (
             <div key={i} className="gantt-tick">
               {i}
             </div>
@@ -290,18 +292,18 @@ function RRScheduling() {
 
       <div className="scheduling-visualization">
         <div className="cpu">
-          <h3>CPU/Running Queue {currentProcess ? '⚡' : '💤'}</h3>
+          <h3>CPU {currentProcess ? '⚡' : '💤'}</h3>
           {currentProcess ? (
             <div className="process-running">
               <span>P{currentProcess.processID}</span>
               <span>Remaining: {currentProcess.remainingTime}s</span>
-              <span>Quantum: {time - currentProcess.startTime}/{timeQuantum}s</span>
+              <span>Quantum Used: {currentProcess.quantumUsed}/{timeQuantum}s</span>
             </div>
           ) : (
             <div className="cpu-idle">
-              {processes.length === 0 && readyQueue.length === 0 && completedProcesses.length > 0
-                ? "All processes completed!"
-                : readyQueue.length > 0 || processes.length > 0 ? "Ready to start" : "No processes"}
+              {readyQueue.length > 0 ? "Ready to schedule" : 
+               processes.length > 0 ? "Waiting for arrivals" : 
+               "All processes completed"}
             </div>
           )}
         </div>
@@ -311,12 +313,9 @@ function RRScheduling() {
             <h3>📥 Ready Queue ({readyQueue.length})</h3>
             {readyQueue.map(process => (
               <div key={process.processID} className="process">
-                <div>
-                  <strong>P{process.processID}</strong> ({process.owner})
-                </div>
-                <div>Arrival: {process.arrivalTime}s</div>
+                <div><strong>P{process.processID}</strong></div>
                 <div>Remaining: {process.remainingTime}s</div>
-                <div>Priority: {process.priority}</div>
+                <div>Arrived: {process.arrivalTime}s</div>
               </div>
             ))}
           </div>
@@ -325,11 +324,7 @@ function RRScheduling() {
             <h3>✅ Completed ({completedProcesses.length})</h3>
             {completedProcesses.map(process => (
               <div key={process.processID} className="process completed">
-                <div><strong>P{process.processID}</strong> ({process.owner})</div>
-                <div>Arrival: {process.arrivalTime}s</div>
-                <div>Burst: {process.burstTime}s</div>
-                <div>Memory: {Math.round(process.memoryRequired / 1024)}MB</div>
-                <div>Completed: {process.completionTime}s</div>
+                <div><strong>P{process.processID}</strong></div>
                 <div>Turnaround: {process.turnaroundTime}s</div>
                 <div>Waiting: {process.waitingTime}s</div>
               </div>
@@ -339,53 +334,47 @@ function RRScheduling() {
       </div>
 
       {completedProcesses.length > 0 && (
-        <div className="results-table">
-          <h3>Scheduling Results</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Process ID</th>
-                <th>Process Name</th>
-                <th>Arrival Time</th>
-                <th>Burst Time</th>
-                <th>Completion Time</th>
-                <th>Turnaround Time</th>
-                <th>Waiting Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {completedProcesses
-                .sort((a, b) => a.processID - b.processID)
-                .map(process => (
-                  <tr key={process.processID}>
-                    <td>P{process.processID}</td>
-                    <td>{process.owner}</td>
-                    <td>{process.arrivalTime}s</td>
-                    <td>{process.burstTime}s</td>
-                    <td>{process.completionTime}s</td>
-                    <td>{process.turnaroundTime}s</td>
-                    <td>{process.waitingTime}s</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        <div className="results">
+          <div className="results-table">
+            <h3>Process Results</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Process</th>
+                  <th>Arrival</th>
+                  <th>Burst</th>
+                  <th>Completion</th>
+                  <th>Turnaround</th>
+                  <th>Waiting</th>
+                </tr>
+              </thead>
+              <tbody>
+                {completedProcesses
+                  .sort((a, b) => a.processID - b.processID)
+                  .map(process => (
+                    <tr key={process.processID}>
+                      <td>P{process.processID}</td>
+                      <td>{process.arrivalTime}s</td>
+                      <td>{process.burstTime}s</td>
+                      <td>{process.completionTime}s</td>
+                      <td>{process.turnaroundTime}s</td>
+                      <td>{process.waitingTime}s</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
 
-
-
-      {completedProcesses.length > 0 && (
-        <div className="metrics">
-          <h3>Scheduling Metrics</h3>
-          <div className="metrics-grid">
-            <div>Average Waiting Time:</div>
-            <div>{metrics.avgWaitingTime}s</div>
-
-            <div>Average Turnaround Time:</div>
-            <div>{metrics.avgTurnaroundTime}s</div>
-
-            <div>Throughput:</div>
-            <div>{metrics.throughput} processes/second</div>
+          <div className="metrics">
+            <h3>Performance Metrics</h3>
+            <div className="metrics-grid">
+              <div>Average Waiting Time:</div>
+              <div>{metrics.avgWaitingTime}s</div>
+              <div>Average Turnaround Time:</div>
+              <div>{metrics.avgTurnaroundTime}s</div>
+              <div>Throughput:</div>
+              <div>{metrics.throughput} processes/second</div>
+            </div>
           </div>
         </div>
       )}
