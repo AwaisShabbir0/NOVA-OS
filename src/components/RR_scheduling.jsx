@@ -19,6 +19,7 @@ function RRScheduling() {
   const [executionHistory, setExecutionHistory] = useState([]);
   const timerRef = useRef(null);
 
+  // Initialize processes
   useEffect(() => {
     if (location.state?.processes) {
       const initialProcesses = location.state.processes.map(p => ({
@@ -26,32 +27,40 @@ function RRScheduling() {
         remainingTime: p.burstTime,
         quantumUsed: 0
       }));
-      setProcesses(initialProcesses.filter(p => p.arrivalTime > 0));
-      setReadyQueue(initialProcesses.filter(p => p.arrivalTime <= 0));
+      setProcesses(initialProcesses);
+      // Initialize ready queue with processes that have arrivalTime <= 0
+      const initialReady = initialProcesses.filter(p => p.arrivalTime <= 0);
+      setReadyQueue(initialReady);
     }
   }, [location.state]);
 
+  // Corrected Round Robin simulation logic
   const runSimulation = () => {
     setTime(prevTime => {
       const currentTime = prevTime + 1;
+
       let newProcesses = [...processes];
       let newReadyQueue = [...readyQueue];
       let newCurrentProcess = currentProcess;
       let newCompletedProcesses = [...completedProcesses];
       let newExecutionHistory = [...executionHistory];
 
+      // Add newly arrived processes to ready queue
       const arrivals = newProcesses.filter(p => p.arrivalTime === currentTime);
       if (arrivals.length > 0) {
         newReadyQueue = [...newReadyQueue, ...arrivals];
         newProcesses = newProcesses.filter(p => !arrivals.includes(p));
       }
 
+      // Process current CPU task
       if (newCurrentProcess) {
         const updatedProcess = {
           ...newCurrentProcess,
           remainingTime: newCurrentProcess.remainingTime - 1,
           quantumUsed: newCurrentProcess.quantumUsed + 1
         };
+
+        // Check if process completed
         if (updatedProcess.remainingTime <= 0) {
           const completionTime = currentTime;
           const turnaroundTime = completionTime - updatedProcess.arrivalTime;
@@ -71,23 +80,28 @@ function RRScheduling() {
           });
 
           newCurrentProcess = null;
-        } else if (updatedProcess.quantumUsed >= timeQuantum) {
+        }
+        // Check if quantum expired
+        else if (updatedProcess.quantumUsed >= timeQuantum) {
           newExecutionHistory.push({
             process: updatedProcess,
             start: updatedProcess.startTime || currentTime - updatedProcess.quantumUsed,
             end: currentTime
           });
 
-          newReadyQueue.push({
+          // Put back in ready queue
+          const requeuedProcess = {
             ...updatedProcess,
             quantumUsed: 0
-          });
+          };
+          newReadyQueue.push(requeuedProcess);
           newCurrentProcess = null;
         } else {
           newCurrentProcess = updatedProcess;
         }
       }
 
+      // Schedule new process if CPU is idle and ready queue not empty
       if (!newCurrentProcess && newReadyQueue.length > 0) {
         newCurrentProcess = {
           ...newReadyQueue[0],
@@ -97,12 +111,14 @@ function RRScheduling() {
         newReadyQueue = newReadyQueue.slice(1);
       }
 
+      // Update all states
       setProcesses(newProcesses);
-      setReadyQueue(newReadyQueue);
       setCurrentProcess(newCurrentProcess);
+      setReadyQueue(newReadyQueue);
       setCompletedProcesses(newCompletedProcesses);
       setExecutionHistory(newExecutionHistory);
 
+      // Stop simulation if all processes are done
       if (!newCurrentProcess && newReadyQueue.length === 0 && newProcesses.length === 0) {
         setIsRunning(false);
       }
@@ -114,23 +130,23 @@ function RRScheduling() {
       timerRef.current = setTimeout(runSimulation, 1000);
     }
   };
+
   useEffect(() => {
     if (isRunning) {
       timerRef.current = setTimeout(runSimulation, 1000);
     } else {
       clearTimeout(timerRef.current);
     }
-    return () => clearTimeout(timerRef.current);
-  }, [isRunning, processes, currentProcess, readyQueue]);
 
+    return () => {
+      clearTimeout(timerRef.current);
+    };
+    // eslint-disable-next-line
+  }, [isRunning, processes, currentProcess, readyQueue, timeQuantum]);
+
+  // Calculate metrics when simulation completes
   useEffect(() => {
-    if (
-      !isRunning &&
-      currentProcess === null &&
-      processes.length === 0 &&
-      readyQueue.length === 0 &&
-      completedProcesses.length > 0
-    ) {
+    if (!isRunning && completedProcesses.length > 0) {
       const totalWaiting = completedProcesses.reduce((sum, p) => sum + p.waitingTime, 0);
       const totalTurnaround = completedProcesses.reduce((sum, p) => sum + p.turnaroundTime, 0);
       const lastCompletion = Math.max(...completedProcesses.map(p => p.completionTime));
@@ -141,7 +157,7 @@ function RRScheduling() {
         throughput: (completedProcesses.length / lastCompletion).toFixed(2)
       });
     }
-  }, [completedProcesses, isRunning, processes, readyQueue, currentProcess]);
+  }, [isRunning, completedProcesses]);
 
   const startSimulation = () => {
     if (processes.length > 0 || readyQueue.length > 0) {
@@ -149,7 +165,7 @@ function RRScheduling() {
       setTime(0);
       setCompletedProcesses([]);
       setExecutionHistory([]);
-      if (readyQueue.length > 0 && !currentProcess) {
+      if (!currentProcess && readyQueue.length > 0) {
         setCurrentProcess({
           ...readyQueue[0],
           startTime: 0,
@@ -174,7 +190,7 @@ function RRScheduling() {
         remainingTime: p.burstTime,
         quantumUsed: 0
       }));
-      setProcesses(initialProcesses.filter(p => p.arrivalTime > 0));
+      setProcesses(initialProcesses);
       setReadyQueue(initialProcesses.filter(p => p.arrivalTime <= 0));
     }
   };
@@ -186,46 +202,143 @@ function RRScheduling() {
     }
   };
 
+  // Generate colors for processes
   const getProcessColor = (processID) => {
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A'];
+    const colors = [
+      '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
+      '#98D8C8', '#F06292', '#7986CB', '#9575CD',
+      '#64B5F6', '#4DB6AC', '#81C784', '#FFD54F'
+    ];
     return colors[processID % colors.length];
   };
 
   return (
     <div className="scheduling">
-      <h2>Round Robin Scheduling</h2>
+      <h2>Process Scheduling (Round Robin)</h2>
 
       <div className="controls">
-        <label>
-          Time Quantum:
-          <input type="number" min="1" value={timeQuantum} onChange={handleTimeQuantumChange} disabled={isRunning} />
-        </label>
-        <button onClick={startSimulation} disabled={isRunning}>
-          {isRunning ? 'Running...' : 'Start'}
+        <div className="time-quantum-control" style={{
+          marginRight: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px'
+        }}>
+          <label style={{ color: '#00d4ff' }}>Time Quantum: </label>
+          <input
+            type="number"
+            min="1"
+            max="10"
+            value={timeQuantum}
+            onChange={handleTimeQuantumChange}
+            disabled={isRunning}
+            style={{
+              width: '50px',
+              padding: '5px',
+              background: '#2c2c2c',
+              border: '1px solid #00d4ff',
+              borderRadius: '4px',
+              color: 'white',
+              textAlign: 'center'
+            }}
+          />
+          <span style={{ color: '#aaa' }}>seconds</span>
+        </div>
+
+        <button className="btn" onClick={startSimulation} disabled={isRunning}>
+          {isRunning ? 'Running...' : 'Start Simulation'}
         </button>
-        <button onClick={resetSimulation}>Reset</button>
-        <span>Time: {time}s</span>
+        <button className="btn" onClick={resetSimulation}>Reset</button>
+        <div className="time-display">Time: {time}s</div>
       </div>
 
       <div className="gantt-chart">
         <h3>Gantt Chart</h3>
         <div className="gantt-container">
           {executionHistory.map((item, index) => (
-            <div key={index} className="gantt-item" style={{
-              width: `${(item.end - item.start) * 30}px`,
-              backgroundColor: getProcessColor(item.process.processID)
-            }}>
+            <div
+              key={index}
+              className="gantt-item"
+              style={{
+                width: `${(item.end - item.start) * 30}px`,
+                backgroundColor: getProcessColor(item.process.processID)
+              }}
+              title={`P${item.process.processID} (${item.start}s-${item.end}s)`}
+            >
               <span>P{item.process.processID}</span>
-              <span>{item.start}s-{item.end}s</span>
+              <span className="gantt-time">{item.start}s-{item.end}s</span>
+            </div>
+          ))}
+          {currentProcess && (
+            <div
+              className="gantt-item current"
+              style={{
+                width: `${30}px`,
+                backgroundColor: getProcessColor(currentProcess.processID)
+              }}
+              title={`P${currentProcess.processID} (${currentProcess.startTime}s-?)`}
+            >
+              <span>P{currentProcess.processID}</span>
+              <span className="gantt-time">{currentProcess.startTime}s</span>
+            </div>
+          )}
+        </div>
+        <div className="gantt-timeline">
+          {Array.from({ length: time + 2 }).map((_, i) => (
+            <div key={i} className="gantt-tick">
+              {i}
             </div>
           ))}
         </div>
       </div>
 
+      <div className="scheduling-visualization">
+        <div className="cpu">
+          <h3>CPU {currentProcess ? '⚡' : '💤'}</h3>
+          {currentProcess ? (
+            <div className="process-running">
+              <span>P{currentProcess.processID}</span>
+              <span>Remaining: {currentProcess.remainingTime}s</span>
+              <span>Quantum Used: {currentProcess.quantumUsed}/{timeQuantum}s</span>
+            </div>
+          ) : (
+            <div className="cpu-idle">
+              {readyQueue.length > 0 ? "Ready to schedule" :
+                processes.length > 0 ? "Waiting for arrivals" :
+                  "All processes completed"}
+            </div>
+          )}
+        </div>
+
+        <div className="queues">
+          <div className="ready-queue">
+            <h3>📥 Ready Queue ({readyQueue.length})</h3>
+            {readyQueue.map(process => (
+              <div key={process.processID} className="process">
+                <div><strong>P{process.processID}</strong></div>
+                <div>Remaining: {process.remainingTime}s</div>
+                <div>Arrived: {process.arrivalTime}s</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="completed-processes">
+            <h3>✅ Completed ({completedProcesses.length})</h3>
+            {completedProcesses.map(process => (
+              <div key={process.processID} className="process completed">
+                <div><strong>P{process.processID}</strong></div>
+                <div>Turnaround: {process.turnaroundTime}s</div>
+                <div>Waiting: {process.waitingTime}s</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {completedProcesses.length > 0 && (
-        <>
+
+        <div className="results">
           <div className="results-table">
-            <h3>Final Results</h3>
+            <h3>Process Results</h3>
             <table>
               <thead>
                 <tr>
@@ -238,30 +351,86 @@ function RRScheduling() {
                 </tr>
               </thead>
               <tbody>
-                {completedProcesses.map(p => (
-                  <tr key={p.processID}>
-                    <td>P{p.processID}</td>
-                    <td>{p.arrivalTime}s</td>
-                    <td>{p.burstTime}s</td>
-                    <td>{p.completionTime}s</td>
-                    <td>{p.turnaroundTime}s</td>
-                    <td>{p.waitingTime}s</td>
-                  </tr>
-                ))}
+                {completedProcesses
+                  .sort((a, b) => a.processID - b.processID)
+                  .map(process => (
+                    <tr key={process.processID}>
+                      <td>P{process.processID}</td>
+                      <td>{process.arrivalTime}s</td>
+                      <td>{process.burstTime}s</td>
+                      <td>{process.completionTime}s</td>
+                      <td>{process.turnaroundTime}s</td>
+                      <td>{process.waitingTime}s</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
 
           <div className="metrics">
-            <h3>Metrics</h3>
-            <p>Average Waiting Time: {metrics.avgWaitingTime}s</p>
-            <p>Average Turnaround Time: {metrics.avgTurnaroundTime}s</p>
-            <p>Throughput: {metrics.throughput} processes/sec</p>
+            <h3>Performance Metrics</h3>
+            <div className="metrics-grid">
+              <div>Average Waiting Time:</div>
+              <div>{metrics.avgWaitingTime}s</div>
+              <div>Average Turnaround Time:</div>
+              <div>{metrics.avgTurnaroundTime}s</div>
+              <div>Throughput:</div>
+              <div>{metrics.throughput} processes/second</div>
+            </div>
           </div>
-        </>
+
+          <div className="results-table">
+            <h3>Scheduling Results</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Process ID</th>
+                  <th>Process Name</th>
+                  <th>Arrival Time</th>
+                  <th>Burst Time</th>
+                  <th>Completion Time</th>
+                  <th>Turnaround Time</th>
+                  <th>Waiting Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {completedProcesses
+                  .sort((a, b) => a.processID - b.processID)
+                  .map(process => (
+                    <tr key={process.processID}>
+                      <td>P{process.processID}</td>
+                      <td>{process.owner}</td>
+                      <td>{process.arrivalTime}s</td>
+                      <td>{process.burstTime}s</td>
+                      <td>{process.completionTime}s</td>
+                      <td>{process.turnaroundTime}s</td>
+                      <td>{process.waitingTime}s</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
-      <Link to="/process" className="back-btn">⬅ Back</Link>
+      {completedProcesses.length > 0 && (
+        <div className="metrics">
+          <h3>Scheduling Metrics</h3>
+          <div className="metrics-grid">
+            <div>Average Waiting Time:</div>
+            <div>{metrics.avgWaitingTime}s</div>
+
+            <div>Average Turnaround Time:</div>
+            <div>{metrics.avgTurnaroundTime}s</div>
+
+            <div>Throughput:</div>
+            <div>{metrics.throughput} processes/second</div>
+
+          </div>
+        </div>
+      )}
+
+      <Link to="/process" className="back-btn">⬅ Back to Process Management</Link>
     </div>
   );
 }
