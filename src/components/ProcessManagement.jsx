@@ -456,7 +456,7 @@ function ProcessManagement() {
       )}
 
       <Link to="/scheduling" state={{ processes }} className="btn scheduling-btn">
-        FCFS Scheduling
+        FCFS Scheduling 
       </Link>
 
       <Link to="/SJF_Scheduling" state={{ processes }} className="btn scheduling-btn">

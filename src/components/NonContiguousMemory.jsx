@@ -1,7 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import FIFOPageReplacement from './FIFOPageReplacement';
-import LRUPageReplacement from './LRUPageReplacement';
 
 const NonContiguousMemory = () => {
   const navigate = useNavigate();
@@ -18,7 +16,6 @@ const NonContiguousMemory = () => {
   const [processes, setProcesses] = useState([]);
   const [pageTables, setPageTables] = useState({});
   const [currentFramePage, setCurrentFramePage] = useState(0);
-  const [algorithm, setAlgorithm] = useState(null); // "FIFO" or "LRU"
 
   const initializeMemory = () => {
     const pageSize = parseInt(pageSizeRef.current.value);
@@ -196,8 +193,6 @@ const NonContiguousMemory = () => {
             </div>
           </section>
 
-          
-
           <section className="page-tables-section">
             <h2>Page Tables</h2>
             <div className="page-tables-grid">
@@ -225,23 +220,8 @@ const NonContiguousMemory = () => {
               ))}
             </div>
           </section>
-
-          <section>
-            <h2>Page Replacement Algorithms</h2>
-            <div className="button-group">
-              <button className="primary-btn" onClick={() => setAlgorithm("FIFO")}>Run FIFO</button>
-              <button className="primary-btn" onClick={() => setAlgorithm("LRU")}>Run LRU</button>
-            </div>
-            {algorithm === "FIFO" && (
-              <FIFOPageReplacement physicalMemory={physicalMemory} setPhysicalMemory={setPhysicalMemory} />
-            )}
-            {algorithm === "LRU" && (
-              <LRUPageReplacement physicalMemory={physicalMemory} setPhysicalMemory={setPhysicalMemory} />
-            )}
-          </section>
         </>
       )}
-
 
       <button className="back-btn" onClick={() => navigate('/memory')}>
         Back to Memory Management

@@ -1,100 +1,154 @@
 import React, { useState } from 'react';
 
-const LRUPageReplacement = ({ physicalMemory, setPhysicalMemory }) => {
-  const [referenceString, setReferenceString] = useState('');
-  const [frameCount] = useState(physicalMemory.length);
-  const [frames, setFrames] = useState(Array(physicalMemory.length).fill(null));
-  const [history, setHistory] = useState([]);
-  const [hits, setHits] = useState(0);
-  const [misses, setMisses] = useState(0);
+const LRUPageReplacement = () => {
+  const [pageRefs, setPageRefs] = useState('');
+  const [frameSize, setFrameSize] = useState(3); // Default frame size
+  const [hitMissLog, setHitMissLog] = useState([]);
 
-  const simulateLRU = () => {
-    const refs = referenceString.split(',').map(p => p.trim());
+  const handleSimulate = () => {
+    const references = pageRefs
+      .split(',')
+      .map(ref => ref.trim())
+      .filter(ref => ref !== '');
+
     let memory = [];
     let useHistory = [];
+    let log = [];
 
-    let hitCount = 0;
-    let missCount = 0;
-    let frameHistory = [];
+    references.forEach((page, step) => {
+      const isHit = memory.includes(page);
 
-    refs.forEach(page => {
-      if (memory.includes(page)) {
-        // HIT
-        hitCount++;
+      if (isHit) {
         useHistory = useHistory.filter(p => p !== page);
         useHistory.push(page);
-        frameHistory.push({ page, isHit: true, frames: [...memory] });
+        log.push({
+          step: step + 1,
+          page,
+          result: 'HIT',
+          frames: [...memory, ...Array(frameSize - memory.length).fill('FREE')],
+        });
       } else {
-        // MISS
-        missCount++;
-        if (memory.length < frameCount) {
+        if (memory.length < frameSize) {
           memory.push(page);
         } else {
-          const lru = useHistory.shift(); // Remove least recently used
-          const indexToReplace = memory.indexOf(lru);
-          memory[indexToReplace] = page;
+          const lru = useHistory.shift(); // Least recently used
+          const replaceIndex = memory.indexOf(lru);
+          memory[replaceIndex] = page;
         }
         useHistory.push(page);
-        frameHistory.push({ page, isHit: false, frames: [...memory] });
+        log.push({
+          step: step + 1,
+          page,
+          result: 'MISS',
+          frames: [...memory, ...Array(frameSize - memory.length).fill('FREE')],
+        });
       }
     });
 
-    setFrames(memory);
-    setHits(hitCount);
-    setMisses(missCount);
-    setHistory(frameHistory);
-
-    // Update physical memory visually
-    const updatedPhysicalMemory = Array(frameCount).fill(null);
-    memory.forEach((page, index) => {
-      updatedPhysicalMemory[index] = page;
-    });
-    setPhysicalMemory(updatedPhysicalMemory);
+    setHitMissLog(log);
   };
 
+  const totalHits = hitMissLog.filter(row => row.result === 'HIT').length;
+  const totalMisses = hitMissLog.filter(row => row.result === 'MISS').length;
+  const total = totalHits + totalMisses;
+  const hitRatio = ((totalHits / total) * 100 || 0).toFixed(2);
+  const missRatio = ((totalMisses / total) * 100 || 0).toFixed(2);
+
   return (
-    <div className="fifo-simulation">
-      <h3>LRU Page Replacement</h3>
-      <input
-        type="text"
-        placeholder="Enter page references (comma separated)"
-        value={referenceString}
-        onChange={(e) => setReferenceString(e.target.value)}
-        className="form-input"
-      />
-      <button className="primary-btn" onClick={simulateLRU}>Simulate</button>
+    <div className="paging-container">
+      <h2 style={{ color: '#00f0ff' }}>LRU Page Replacement Simulation</h2>
 
-      <div className="result-summary">
-        <p><strong>Total Hits:</strong> {hits}</p>
-        <p><strong>Total Misses:</strong> {misses}</p>
-        <p><strong>Hit Ratio:</strong> {(hits / (hits + misses) || 0).toFixed(2)}</p>
+      {/* Inputs */}
+      <div className="input-group">
+        <input
+          type="text"
+          placeholder="Enter page references (comma separated)"
+          value={pageRefs}
+          onChange={(e) => setPageRefs(e.target.value)}
+          className="form-input"
+        />
+        <input
+          type="number"
+          placeholder="Frame size"
+          value={frameSize}
+          onChange={(e) => setFrameSize(parseInt(e.target.value))}
+          className="form-input"
+          min={1}
+        />
+        <button className="primary-btn" onClick={handleSimulate}>Simulate</button>
       </div>
 
-      <div className="history-table">
-        <h4>Simulation History</h4>
-        <table className="info-table">
-          <thead>
-            <tr>
-              <th>Step</th>
-              <th>Page</th>
-              <th>Hit/Miss</th>
-              <th>Frames</th>
-            </tr>
-          </thead>
-          <tbody>
-            {history.map((step, index) => (
-              <tr key={index}>
-                <td>{index + 1}</td>
-                <td>{step.page}</td>
-                <td style={{ color: step.isHit ? 'lightgreen' : 'tomato' }}>
-                  {step.isHit ? 'Hit' : 'Miss'}
-                </td>
-                <td>{step.frames.join(', ')}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {hitMissLog.length > 0 && (
+        <>
+          {/* Frame History */}
+          <div className="results-table">
+            <h3>Frame History</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Step</th>
+                  <th>Page</th>
+                  <th>Result</th>
+                  {Array.from({ length: frameSize }).map((_, i) => (
+                    <th key={i}>Frame {i}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {hitMissLog.map(({ step, page, result, frames }) => (
+                  <tr key={step}>
+                    <td>{step}</td>
+                    <td>{page}</td>
+                    <td style={{ color: result === 'HIT' ? '#0f0' : '#f00' }}>{result}</td>
+                    {Array.from({ length: frameSize }).map((_, i) => (
+                      <td key={i}>{frames[i] || 'FREE'}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Summary Table */}
+          <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'center' }}>
+            <table style={{
+              borderCollapse: 'collapse',
+              backgroundColor: '#1a1a1a',
+              color: '#fff',
+              border: '2px solid #00f0ff',
+              width: '500px',
+              textAlign: 'center',
+              fontSize: '16px',
+              boxShadow: '0 0 10px #00f0ff',
+            }}>
+              <thead>
+                <tr style={{ backgroundColor: '#00f0ff', color: '#000' }}>
+                  <th>Metric</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Total Hits</td>
+                  <td>{totalHits}</td>
+                </tr>
+                <tr>
+                  <td>Total Misses</td>
+                  <td>{totalMisses}</td>
+                </tr>
+                <tr>
+                  <td>Hit Ratio</td>
+                  <td>{hitRatio}%</td>
+                </tr>
+                <tr>
+                  <td>Miss Ratio</td>
+                  <td>{missRatio}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 };
