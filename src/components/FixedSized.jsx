@@ -177,14 +177,14 @@ const FixedSized = () => {
       )}
       <button
         className="action-btn"
-        onClick={() => navigate('/memory')}
+        onClick={() => navigate('/contiguous')}
         style={{
           background: 'linear-gradient(135deg, #ff4444, #ff0000)',
           margin: '0 auto',
           display: 'block'
         }}
       >
-        Back to Memory Management
+        Back 
       </button>
     </div>
   );

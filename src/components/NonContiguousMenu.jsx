@@ -11,11 +11,8 @@ const NonContiguousMenu = () => {
         <button className="btn" onClick={() => navigate('/paging')}>
           Paging
         </button>
-        <button className="btn" onClick={() => navigate('/fifo')}>
-          FIFO Page Replacement
-        </button>
-        <button className="btn" onClick={() => navigate('/lru')}>
-          LRU Page Replacement
+        <button className="btn" onClick={() => navigate('/replacement')}>
+          Page Replacement Algorithms
         </button>
         <button className="back-btn" onClick={() => navigate('/memory')}>
           Back
