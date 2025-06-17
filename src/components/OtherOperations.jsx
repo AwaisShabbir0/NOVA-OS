@@ -1,13 +1,23 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-function OtherOperations() {
+const OtherOperations = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="text-white p-4">
-      <h1 className="text-3xl font-bold mb-4">Other Operations</h1>
-      <p className="text-lg">Handle miscellaneous operating system functionalities here.</p>
+    <div className="control-panel">
+      <h1>Other Operations</h1>
+      <div className="buttons">
+        <button className="btn" onClick={() => navigate('/synchronization')}>
+          Process Synchronization
+        </button>
+        {/* Future IPC task button can be added here */}
+        <button className="back-btn" onClick={() => navigate('/')}>
+          Back
+        </button>
+      </div>
     </div>
   );
-}
+};
 
 export default OtherOperations;
-    

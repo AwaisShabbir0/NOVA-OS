@@ -18,6 +18,7 @@ import Scheduling from './components/Scheduling';
 import RR_scheduling from './components/RR_scheduling';
 import SJF_Scheduling from './components/SJF_Scheduling';
 import PriorityScheduling from './components/PriorityScheduling';
+import Synchronization from './components/Synchronization';
 import logo from './assets/novaos_logo.png';
 
 function App() {
@@ -72,6 +73,7 @@ function App() {
         {/* Other Ops */}
         <Route path="/io" element={<IOManagement />} />
         <Route path="/other" element={<OtherOperations />} />
+        <Route path="/synchronization" element={<Synchronization />} /> 
         <Route path="/config" element={<Configurations />} />
       </Routes>
     </div>

@@ -1,0 +1,110 @@
+/* === Synchronization.css - Polished Centered GUI === */
+
+.sync-container {
+  max-width:800px;
+  margin: 0 auto;
+  max-height: 90vh;
+  
+  padding: 2rem;
+  background-color: #181818;
+  border-radius: 10px;
+  box-shadow: 0 0 20px #00f0ff33;
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Header */
+.sync-container h2 {
+  font-size: 2.2rem;
+  color: #00f0ff;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Mutex Status */
+.mutex-status {
+    text-align: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #ccc;
+}
+
+/* Section Layout */
+.sync-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+}
+
+/* Column boxes */
+.sync-column {
+  background: #222;
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  flex: 1 1 350px;
+  min-width: 300px;
+  border: 1px solid #333;
+}
+
+/* Titles */
+.sync-column h3,
+.sync-column h4 {
+  color: #00cfff;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Process card */
+.process-card {
+  background-color: #2a2a2a;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #444;
+  text-align: center;
+}
+
+/* Buttons */
+.sync-btn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: linear-gradient(to right, #00f0ff, #0080ff);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.sync-btn:hover {
+  background: linear-gradient(to right, #00cfff, #006dcc);
+}
+
+.sync-btn:disabled {
+  background: #444;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* Critical Section Highlight */
+.critical-box {
+  border: 2px solid #00f0ff;
+  background-color: #002a3a;
+  padding: 1rem;
+  border-radius: 10px;
+  color: #fff;
+}
+
+/* Queue list */
+ul.sync-queue {
+  padding-left: 1.5rem;
+  color: #ddd;
+}
+
+.sync-queue li {
+  margin-bottom: 5px;
+}
