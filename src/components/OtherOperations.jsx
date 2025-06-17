@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const OtherOperations = () => {
   const navigate = useNavigate();
@@ -8,11 +8,14 @@ const OtherOperations = () => {
     <div className="control-panel">
       <h1>Other Operations</h1>
       <div className="buttons">
-        <button className="btn" onClick={() => navigate('/synchronization')}>
+        <button className="btn" onClick={() => navigate("/synchronization")}>
           Process Synchronization
         </button>
-        {/* Future IPC task button can be added here */}
-        <button className="back-btn" onClick={() => navigate('/')}>
+        <button className="btn" onClick={() => navigate("/ipc")}>
+          Inter-Process Communication
+        </button>
+
+        <button className="back-btn" onClick={() => navigate("/")}>
           Back
         </button>
       </div>

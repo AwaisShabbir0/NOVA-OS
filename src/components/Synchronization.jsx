@@ -107,7 +107,7 @@ function Synchronization() {
           </div>
         </div>
       </div>
-      <button className="back-btn" onClick={() => navigate('/')}>
+      <button className="back-btn" onClick={() => navigate('/other')}>
           Back
         </button>
     </div>
