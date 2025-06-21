@@ -29,64 +29,76 @@ function PriorityScheduling() {
     }
   }, [location.state]);
 
-  const runSimulation = () => {
-    setTime(prevTime => {
-      const currentTime = prevTime + 1;
+const runSimulation = () => {
+  setTime(prevTime => {
+    const currentTime = prevTime + 1;
 
-      // Move newly arrived processes into readyQueue
-      const arrivedNow = processes.filter(p => p.arrivalTime <= currentTime);
-      if (arrivedNow.length > 0) {
-        setReadyQueue(prev => [...prev, ...arrivedNow]);
-        setProcesses(prev => prev.filter(p => !arrivedNow.includes(p)));
-      }
+    let updatedProcesses = [...processes];
+    let newReadyQueue = [...readyQueue];
+    let newCompleted = [...completedProcesses];
+    let newExecution = [...executionHistory];
+    let nextCurrentProcess = currentProcess;
 
-      if (!currentProcess && readyQueue.length > 0) {
-        const sortedQueue = [...readyQueue].sort((a, b) => {
-          if (a.priority !== b.priority) return a.priority - b.priority;
-          return a.arrivalTime - b.arrivalTime;
+    // Add all processes that have arrived (arrivalTime <= currentTime)
+    const arrivals = updatedProcesses.filter(p => p.arrivalTime <= currentTime);
+    newReadyQueue.push(...arrivals);
+    updatedProcesses = updatedProcesses.filter(p => p.arrivalTime > currentTime);
+
+    // If no process is running, schedule the highest priority one
+    if (!nextCurrentProcess && newReadyQueue.length > 0) {
+      // Lower number = higher priority
+      newReadyQueue.sort((a, b) => a.priority - b.priority);
+      const toRun = newReadyQueue.shift();
+      nextCurrentProcess = {
+        ...toRun,
+        startTime: currentTime,
+        remainingTime: toRun.burstTime
+      };
+    }
+
+    // If a process is running, decrement its remainingTime
+    if (nextCurrentProcess) {
+      nextCurrentProcess.remainingTime -= 1;
+
+      // If finished, mark as completed
+      if (nextCurrentProcess.remainingTime === 0) {
+        const completionTime = currentTime;
+        const turnaroundTime = completionTime - nextCurrentProcess.arrivalTime;
+        const waitingTime = turnaroundTime - nextCurrentProcess.burstTime;
+
+        newCompleted.push({
+          ...nextCurrentProcess,
+          completionTime,
+          turnaroundTime,
+          waitingTime
         });
-        const nextProcess = sortedQueue[0];
-        setCurrentProcess({ ...nextProcess, startTime: currentTime });
-        setReadyQueue(prev => prev.filter(p => p.processID !== nextProcess.processID));
+
+        newExecution.push({
+          process: nextCurrentProcess,
+          start: nextCurrentProcess.startTime,
+          end: completionTime
+        });
+
+        nextCurrentProcess = null;
       }
+    }
 
-      if (currentProcess) {
-        const remaining = currentProcess.remainingTime - 1;
-        if (remaining <= 0) {
-          const completionTime = currentTime;
-          const turnaroundTime = completionTime - currentProcess.arrivalTime;
-          const waitingTime = turnaroundTime - currentProcess.burstTime;
+    // Update all states
+    setProcesses(updatedProcesses);
+    setReadyQueue(newReadyQueue);
+    setCompletedProcesses(newCompleted);
+    setExecutionHistory(newExecution);
+    setCurrentProcess(nextCurrentProcess);
 
-          const completed = {
-            ...currentProcess,
-            completionTime,
-            turnaroundTime,
-            waitingTime
-          };
+    // Stop simulation if all processes are done
+    if (updatedProcesses.length === 0 && newReadyQueue.length === 0 && !nextCurrentProcess) {
+      setIsRunning(false);
+    }
 
-          setCompletedProcesses(prev => [...prev, completed]);
-          setExecutionHistory(prev => [...prev, {
-            process: currentProcess,
-            start: currentProcess.startTime,
-            end: completionTime
-          }]);
-          setCurrentProcess(null);
-        } else {
-          setCurrentProcess(prev => ({
-            ...prev,
-            remainingTime: remaining
-          }));
-        }
-      }
+    return currentTime;
+  });
+};
 
-      // Check if simulation should stop
-      if (processes.length === 0 && readyQueue.length === 0 && currentProcess === null) {
-        setIsRunning(false);
-      }
-
-      return currentTime;
-    });
-  };
 
   useEffect(() => {
     if (isRunning) {

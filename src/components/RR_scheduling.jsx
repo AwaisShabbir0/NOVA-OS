@@ -79,6 +79,9 @@ function RRScheduling() {
             end: currentTime
           });
 
+          // Remove from newProcesses
+          newProcesses = newProcesses.filter(p => p.processID !== updatedProcess.processID);
+
           newCurrentProcess = null;
         }
         // Check if quantum expired
@@ -334,51 +337,9 @@ function RRScheduling() {
         </div>
       </div>
 
+      {/* Only render results and metrics ONCE */}
       {completedProcesses.length > 0 && (
-
         <div className="results">
-          <div className="results-table">
-            <h3>Process Results</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Process</th>
-                  <th>Arrival</th>
-                  <th>Burst</th>
-                  <th>Completion</th>
-                  <th>Turnaround</th>
-                  <th>Waiting</th>
-                </tr>
-              </thead>
-              <tbody>
-                {completedProcesses
-                  .sort((a, b) => a.processID - b.processID)
-                  .map(process => (
-                    <tr key={process.processID}>
-                      <td>P{process.processID}</td>
-                      <td>{process.arrivalTime}s</td>
-                      <td>{process.burstTime}s</td>
-                      <td>{process.completionTime}s</td>
-                      <td>{process.turnaroundTime}s</td>
-                      <td>{process.waitingTime}s</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="metrics">
-            <h3>Performance Metrics</h3>
-            <div className="metrics-grid">
-              <div>Average Waiting Time:</div>
-              <div>{metrics.avgWaitingTime}s</div>
-              <div>Average Turnaround Time:</div>
-              <div>{metrics.avgTurnaroundTime}s</div>
-              <div>Throughput:</div>
-              <div>{metrics.throughput} processes/second</div>
-            </div>
-          </div>
-
           <div className="results-table">
             <h3>Scheduling Results</h3>
             <table>
@@ -410,22 +371,16 @@ function RRScheduling() {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {completedProcesses.length > 0 && (
-        <div className="metrics">
-          <h3>Scheduling Metrics</h3>
-          <div className="metrics-grid">
-            <div>Average Waiting Time:</div>
-            <div>{metrics.avgWaitingTime}s</div>
-
-            <div>Average Turnaround Time:</div>
-            <div>{metrics.avgTurnaroundTime}s</div>
-
-            <div>Throughput:</div> 
-            <div>{metrics.throughput} processes/second</div>
-
+          <div className="metrics">
+            <h3>Scheduling Metrics</h3>
+            <div className="metrics-grid">
+              <div>Average Waiting Time:</div>
+              <div>{metrics.avgWaitingTime}s</div>
+              <div>Average Turnaround Time:</div>
+              <div>{metrics.avgTurnaroundTime}s</div>
+              <div>Throughput:</div>
+              <div>{metrics.throughput} processes/second</div>
+            </div>
           </div>
         </div>
       )}

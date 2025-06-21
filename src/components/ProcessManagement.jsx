@@ -1,23 +1,23 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PCB from '../models/PCB';
 import './ProcessManagement.css';
 
-function ProcessManagement() {
+const ProcessManagement = () => {
   const [maxProcesses, setMaxProcesses] = useState(() => {
-    const saved = sessionStorage.getItem('maxProcesses');
+    const saved = localStorage.getItem('maxProcesses');
     return saved ? parseInt(saved) : null;
   });
   const [remaining, setRemaining] = useState(() => {
-    const saved = sessionStorage.getItem('remainingProcesses');
+    const saved = localStorage.getItem('remainingProcesses');
     return saved ? parseInt(saved) : null;
   });
   const [initialPrompt, setInitialPrompt] = useState(() => {
-    const saved = sessionStorage.getItem('maxProcesses');
+    const saved = localStorage.getItem('maxProcesses');
     return saved ? false : true;
   });
 
-  // Keep processes in localStorage if you want to persist them, or use sessionStorage for session-only
+
   const [processes, setProcesses] = useState(() => {
     const saved = localStorage.getItem('pcbProcesses');
     return saved ? JSON.parse(saved).map(data => new PCB(data)) : [];
@@ -44,6 +44,9 @@ function ProcessManagement() {
     return savedID ? Math.max(parseInt(savedID), maxID + 1) : maxID + 1;
   });
 
+  const [showLimitPopup, setShowLimitPopup] = useState(false);
+  const [additionalLimit, setAdditionalLimit] = useState('');
+
   useEffect(() => {
     localStorage.setItem('pcbProcesses', JSON.stringify(processes));
   }, [processes]);
@@ -55,14 +58,15 @@ function ProcessManagement() {
   const processors = ["CPU-0", "CPU-1", "CPU-2", "CPU-3"];
 
   const handleInitialLimitSubmit = (e) => {
+    localStorage.setItem('maxProcesses', num.toString());
+    localStorage.setItem('remainingProcesses', num.toString());
+
     e.preventDefault();
     const num = parseInt(e.target.elements.processCount.value);
     if (!isNaN(num) && num > 0) {
       setMaxProcesses(num);
       setRemaining(num);
       setInitialPrompt(false);
-      sessionStorage.setItem('maxProcesses', num.toString());
-      sessionStorage.setItem('remainingProcesses', num.toString());
     }
   };
 
@@ -77,7 +81,8 @@ function ProcessManagement() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (remaining === 0) {
-      alert("You have already created the maximum allowed processes.");
+      setShowLimitPopup(true); // Show popup instead of alert
+      setActiveModal(null);    // Close the create modal while popup is open
       return;
     }
 
@@ -96,6 +101,7 @@ function ProcessManagement() {
     setNextProcessID(prev => prev + 1);
     setRemaining(prev => prev - 1);
     localStorage.setItem('remainingProcesses', (remaining - 1).toString());
+
 
     setFormData({
       owner: '',
@@ -191,8 +197,46 @@ function ProcessManagement() {
     }
   };
 
+  const handleAddMoreProcesses = (e) => {
+    e.preventDefault();
+    const addNum = parseInt(additionalLimit);
+    if (!isNaN(addNum) && addNum > 0) {
+      const newMax = maxProcesses + addNum;
+      const newRemaining = remaining + addNum;
+      setMaxProcesses(newMax);
+      setRemaining(newRemaining);
+      sessionStorage.setItem('maxProcesses', newMax.toString());
+      sessionStorage.setItem('remainingProcesses', newRemaining.toString());
+      setShowLimitPopup(false);
+      setAdditionalLimit('');
+      setActiveModal('create'); // <-- Reopen the create process modal
+    }
+  };
+
   return (
     <div className="process-management">
+      {/* Limit reached popup */}
+      {showLimitPopup && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Process Limit Reached</h3>
+            <p>You have reached the maximum number of processes.</p>
+            <form onSubmit={handleAddMoreProcesses}>
+              <input
+                type="number"
+                min="1"
+                placeholder="Add more processes"
+                value={additionalLimit}
+                onChange={e => setAdditionalLimit(e.target.value)}
+                required
+              />
+              <button className="btn-add" type="submit">Add</button>
+              <button className="close-btn" type="button" onClick={() => setShowLimitPopup(false)}>Cancel</button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {initialPrompt ? (
         <form onSubmit={handleInitialLimitSubmit} className="initial-limit-form">
           <h2>Enter Number of Processes to Create</h2>
@@ -213,284 +257,290 @@ function ProcessManagement() {
             <button className="btn" onClick={() => setActiveModal('changePriority')}>Change Priority</button>
           </div>
           {activeModal && (
-            <div className="modal-overlay">
-              <div className="modal">
-                <button className="close-btn" onClick={() => setActiveModal(null)}>X</button>
+        <div className="modal-overlay">
+          <div className="modal">
+            <button className="close-btn" onClick={() => setActiveModal(null)}>X</button>
 
-                {activeModal === 'create' && (
-                  <form onSubmit={handleSubmit} className="create-form">
-                    <h3>Create New Process</h3>
-                    <input
-                      type="text"
-                      name="owner"
-                      placeholder="Process Name (e.g.P1)"
-                      value={formData.owner}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    <input
-                      type="number"
-                      name="burstTime"
-                      placeholder="Burst Time (seconds)"
-                      min="1"
-                      max="30"
-                      value={formData.burstTime}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    <input
-                      type="number"
-                      name="arrivalTime"
-                      placeholder="Arrival Time (seconds)"
-                      min="0"
-                      value={formData.arrivalTime}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    <input
-                      type="number"
-                      name="priority"
-                      placeholder="Priority (0-9)"
-                      min="0"
-                      max="9"
-                      value={formData.priority}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    <input
-                      type="number"
-                      name="memoryRequired"
-                      placeholder="Process Size (Bytes)"
-                      min="1"
-                      value={formData.memoryRequired}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    <label className="checkbox-wrapper">
-                      <input
-                        type="checkbox"
-                        name="ioRequest"
-                        checked={formData.ioRequest}
-                        onChange={handleInputChange}
-                        className="styled-checkbox"
-                      />
-                      Does this process require I/O?
-                    </label>
+            {activeModal === 'create' && (
+              <form onSubmit={handleSubmit} className="create-form">
+                <h3>Create New Process</h3>
+                <input
+                  type="text"
+                  name="owner"
+                  placeholder="Process Name (e.g.P1)"
+                  value={formData.owner}
+                  onChange={handleInputChange}
+                  required
+                />
+                <input
+                  type="number"
+                  name="burstTime"
+                  placeholder="Burst Time (seconds)"
+                  min="1"
+                  max="30"
+                  value={formData.burstTime}
+                  onChange={handleInputChange}
+                  required
+                />
+                <input
+                  type="number"
+                  name="arrivalTime"
+                  placeholder="Arrival Time (seconds)"
+                  min="0"
+                  value={formData.arrivalTime}
+                  onChange={handleInputChange}
+                  required
+                />
+                <input
+                  type="number"
+                  name="priority"
+                  placeholder="Priority (0-9)"
+                  min="0"
+                  max="9"
+                  value={formData.priority}
+                  onChange={handleInputChange}
+                  required
+                />
+                <input
+                  type="number"
+                  name="memoryRequired"
+                  placeholder="Process Size (Bytes)"
+                  min="1"
+                  value={formData.memoryRequired}
+                  onChange={handleInputChange}
+                  required
+                />
+                <label className="checkbox-wrapper">
+                  <input
+                    type="checkbox"
+                    name="ioRequest"
+                    checked={formData.ioRequest}
+                    onChange={handleInputChange}
+                    className="styled-checkbox"
+                  />
+                  Does this process require I/O?
+                </label>
 
-                    <select name="processor" value={formData.processor} onChange={handleInputChange}>
-                      {processors.map(proc => <option key={proc} value={proc}>{proc}</option>)}
-                    </select>
-                    <button className="btn-add" type="submit">Add Process</button>
-                  </form>
-                )}
+                <select name="processor" value={formData.processor} onChange={handleInputChange}>
+                  {processors.map(proc => <option key={proc} value={proc}>{proc}</option>)}
+                </select>
+                <button className="btn-add" type="submit">Add Process</button>
+              </form>
+            )}
 
-                {activeModal === 'destroy' && (
-                  <form onSubmit={handleDestroyProcess} className="action-form">
-                    <h3>Destroy Process</h3>
-                    <select
-                      value={selectedProcessID}
-                      onChange={(e) => setSelectedProcessID(e.target.value)}
-                      required
-                    >
-                      <option value="">Select a process</option>
-                      {processes.map(process => (
-                        <option key={process.processID} value={process.processID}>
-                          {`ID: ${process.processID} - ${process.owner} (${process.currentState})`}
-                        </option>
-                      ))}
-                    </select>
-                    <button className="btn-add" type="submit">Destroy</button>
-                  </form>
-                )}
+            {activeModal === 'destroy' && (
+              <form onSubmit={handleDestroyProcess} className="action-form">
+                <h3>Destroy Process</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a process</option>
+                  {processes.map(process => (
+                    <option key={process.processID} value={process.processID}>
+                      {`ID: ${process.processID} - ${process.owner} (${process.currentState})`}
+                    </option>
+                  ))}
+                </select>
+                <button className="btn-add" type="submit">Destroy</button>
+              </form>
+            )}
 
-                {activeModal === 'suspend' && (
-                  <form onSubmit={handleSuspendProcess} className="action-form">
-                    <h3>Suspend Process</h3>
-                    <select
-                      value={selectedProcessID}
-                      onChange={(e) => setSelectedProcessID(e.target.value)}
-                      required
-                    >
-                      <option value="">Select a process to suspend</option>
-                      {processes
-                        .filter(p => p.currentState !== 'Suspended' && p.currentState !== 'Terminated' && p.currentState !== 'Waiting')
-                        .map(process => (
-                          <option key={process.processID} value={process.processID}>
-                            {`ID: ${process.processID} - ${process.owner} (${process.currentState})`}
-                          </option>
-                        ))}
-                    </select>
-                    <button className="btn-add" type="submit">Suspend Process</button>
-                  </form>
-                )}
-
-                {activeModal === 'resume' && (
-                  <form onSubmit={handleResumeProcess} className="action-form">
-                    <h3>Resume Process</h3>
-                    <select
-                      value={selectedProcessID}
-                      onChange={(e) => setSelectedProcessID(e.target.value)}
-                      required
-                    >
-                      <option value="">Select a suspended process</option>
-                      {processes
-                        .filter(p => p.currentState === 'Suspended')
-                        .map(process => (
-                          <option key={process.processID} value={process.processID}>
-                            {`ID: ${process.processID} - ${process.owner}`}
-                          </option>
-                        ))}
-                    </select>
-                    <button className="btn-add" type="submit">Resume Process</button>
-                  </form>
-                )}
-
-                {activeModal === 'block' && (
-                  <form onSubmit={handleBlockProcess} className="action-form">
-                    <h3>Block Process</h3>
-                    <select
-                      value={selectedProcessID}
-                      onChange={(e) => setSelectedProcessID(e.target.value)}
-                      required
-                    >
-                      <option value="">Select a process to block</option>
-                      {processes
-                        .filter(p => p.currentState === 'Running')
-                        .map(process => (
-                          <option key={process.processID} value={process.processID}>
-                            {`ID: ${process.processID} - ${process.owner} (${process.currentState})`}
-                          </option>
-                        ))}
-                    </select>
-                    <button className="btn-add" type="submit">Block Process</button>
-                  </form>
-                )}
-
-                {activeModal === 'wakeup' && (
-                  <form onSubmit={handleWakeupProcess} className="action-form">
-                    <h3>Wakeup Process</h3>
-                    <select
-                      value={selectedProcessID}
-                      onChange={(e) => setSelectedProcessID(e.target.value)}
-                      required
-                    >
-                      <option value="">Select a blocked process</option>
-                      {processes
-                        .filter(p => p.currentState === 'Waiting')
-                        .map(process => (
-                          <option key={process.processID} value={process.processID}>
-                            {`ID: ${process.processID} - ${process.owner}`}
-                          </option>
-                        ))}
-                    </select>
-                    <button className="btn-add" type="submit">Wakeup Process</button>
-                  </form>
-                )}
-
-                {activeModal === 'dispatch' && (
-                  <form onSubmit={handleDispatchProcess} className="action-form">
-                    <h3>Dispatch Process</h3>
-                    <select
-                      value={selectedProcessID}
-                      onChange={(e) => setSelectedProcessID(e.target.value)}
-                      required
-                    >
-                      <option value="">Select a ready process</option>
-                      {processes
-                        .filter(p => p.currentState === 'Ready')
-                        .map(process => (
-                          <option key={process.processID} value={process.processID}>
-                            {`ID: ${process.processID} - ${process.owner}`}
-                          </option>
-                        ))}
-                    </select>
-                    <button className="btn-add" type="submit">Dispatch Process</button>
-                  </form>
-                )}
-
-                {activeModal === 'changePriority' && (
-                  <form onSubmit={handleChangePriority} className="action-form">
-                    <h3>Change Process Priority</h3>
-                    <select
-                      value={selectedProcessID}
-                      onChange={(e) => setSelectedProcessID(e.target.value)}
-                      required
-                    >
-                      <option value="">Select a process</option>
-                      {processes.map(process => (
-                        <option key={process.processID} value={process.processID}>
-                          {`ID: ${process.processID} - ${process.owner} (Current Priority: ${process.priority})`}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      placeholder="New Priority (0-9)"
-                      min="0"
-                      max="9"
-                      value={newPriority}
-                      onChange={(e) => setNewPriority(e.target.value)}
-                      required
-                    />
-                    <button className="btn-add" type="submit">Update Priority</button>
-                  </form>
-                )}
-              </div>
-            </div>
-          )}
-
-          {processes.length > 0 && (
-            <div className="process-list">
-              <h3>Processes (PCB)</h3>
-              <div className="table-container">
-                <table className="process-table">
-                  <thead>
-                    <tr>
-                      <th>Process ID</th>
-                      <th>State</th>
-                      <th>Owner</th>
-                      <th>Priority</th>
-                      <th>Arrival</th>
-                      <th>Burst</th>
-                      <th>Process Size</th>
-                      <th>Processor</th>
-                      <th>I/O State</th>
-                      <th>I/O Request</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {processes.map(process => (
-                      <tr key={process.processID}>
-                        <td>{process.processID}</td>
-                        <td className={`state-${process.currentState?.toLowerCase()}`}>{process.currentState}</td>
-                        <td>{process.owner}</td>
-                        <td className={`priority-${process.priority}`}>{process.priority}</td>
-                        <td>{process.arrivalTime}s</td>
-                        <td>{process.burstTime}s</td>
-                        <td>{process.memoryRequired} Bytes</td>
-                        <td>{process.processor}</td>
-                        <td>{process.ioState}</td>
-                        <td>{process.ioRequest ? "Yes" : "No"}</td>
-                      </tr>
+            {activeModal === 'suspend' && (
+              <form onSubmit={handleSuspendProcess} className="action-form">
+                <h3>Suspend Process</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a process to suspend</option>
+                  {processes
+                    .filter(p => p.currentState !== 'Suspended' && p.currentState !== 'Terminated' && p.currentState !== 'Waiting')
+                    .map(process => (
+                      <option key={process.processID} value={process.processID}>
+                        {`ID: ${process.processID} - ${process.owner} (${process.currentState})`}
+                      </option>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                </select>
+                <button className="btn-add" type="submit">Suspend Process</button>
+              </form>
+            )}
 
-          <Link to="/scheduling" state={{ processes }} className="btn scheduling-btn">
-            FCFS Scheduling
-          </Link>
-          <Link to="/SJF_Scheduling" state={{ processes }} className="btn scheduling-btn">
-            SJF preemptive Scheduling
-          </Link>
-          <Link to="/RR_scheduling" state={{ processes }} className="btn scheduling-btn">
-            Round Robin Scheduling
-          </Link>
-          <Link to="/PriorityScheduling" state={{ processes }} className="btn scheduling-btn">
-            Priority Scheduling
-          </Link>
+            {activeModal === 'resume' && (
+              <form onSubmit={handleResumeProcess} className="action-form">
+                <h3>Resume Process</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a suspended process</option>
+                  {processes
+                    .filter(p => p.currentState === 'Suspended')
+                    .map(process => (
+                      <option key={process.processID} value={process.processID}>
+                        {`ID: ${process.processID} - ${process.owner}`}
+                      </option>
+                    ))}
+                </select>
+                <button className="btn-add" type="submit">Resume Process</button>
+              </form>
+            )}
+
+            {activeModal === 'block' && (
+              <form onSubmit={handleBlockProcess} className="action-form">
+                <h3>Block Process</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a process to block</option>
+                  {processes
+                    .filter(p => p.currentState === 'Running')
+                    .map(process => (
+                      <option key={process.processID} value={process.processID}>
+                        {`ID: ${process.processID} - ${process.owner} (${process.currentState})`}
+                      </option>
+                    ))}
+                </select>
+                <button className="btn-add" type="submit">Block Process</button>
+              </form>
+            )}
+
+            {activeModal === 'wakeup' && (
+              <form onSubmit={handleWakeupProcess} className="action-form">
+                <h3>Wakeup Process</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a blocked process</option>
+                  {processes
+                    .filter(p => p.currentState === 'Waiting')
+                    .map(process => (
+                      <option key={process.processID} value={process.processID}>
+                        {`ID: ${process.processID} - ${process.owner}`}
+                      </option>
+                    ))}
+                </select>
+                <button className="btn-add" type="submit">Wakeup Process</button>
+              </form>
+            )}
+
+            {activeModal === 'dispatch' && (
+              <form onSubmit={handleDispatchProcess} className="action-form">
+                <h3>Dispatch Process</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a ready process</option>
+                  {processes
+                    .filter(p => p.currentState === 'Ready')
+                    .map(process => (
+                      <option key={process.processID} value={process.processID}>
+                        {`ID: ${process.processID} - ${process.owner}`}
+                      </option>
+                    ))}
+                </select>
+                <button className="btn-add" type="submit">Dispatch Process</button>
+              </form>
+            )}
+
+            {activeModal === 'changePriority' && (
+              <form onSubmit={handleChangePriority} className="action-form">
+                <h3>Change Process Priority</h3>
+                <select
+                  value={selectedProcessID}
+                  onChange={(e) => setSelectedProcessID(e.target.value)}
+                  required
+                >
+                  <option value="">Select a process</option>
+                  {processes.map(process => (
+                    <option key={process.processID} value={process.processID}>
+                      {`ID: ${process.processID} - ${process.owner} (Current Priority: ${process.priority})`}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  placeholder="New Priority (0-9)"
+                  min="0"
+                  max="9"
+                  value={newPriority}
+                  onChange={(e) => setNewPriority(e.target.value)}
+                  required
+                />
+                <button className="btn-add" type="submit">Update Priority</button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {processes.length > 0 && (
+        <div className="process-list">
+          <h3>Processes (PCB)</h3>
+          <div className="table-container">
+            <table className="process-table">
+              <thead>
+                <tr>
+                  <th>Process ID</th>
+                  <th>State</th>
+                  <th>Owner</th>
+                  <th>Priority</th>
+                  <th>Arrival</th>
+                  <th>Burst</th>
+                  <th>Process Size</th> {/* ✅ new column */}
+                  <th>Processor</th>
+                  <th>I/O State</th>
+                  <th>I/O Request</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {processes.map(process => (
+                  <tr key={process.processID}>
+                    <td>{process.processID}</td>
+                    <td className={`state-${process.currentState.toLowerCase()}`}>{process.currentState}</td>
+                    <td>{process.owner}</td>
+                    <td className={`priority-${process.priority}`}>{process.priority}</td>
+                    <td>{process.arrivalTime}s</td>
+                    <td>{process.burstTime}s</td>
+                    <td>{process.memoryRequired} Bytes</td> {/* ✅ exact bytes */}
+                    <td>{process.processor}</td>
+                    <td>{process.ioState}</td>
+                    <td>{process.ioRequest ? "Yes" : "No"}</td>
+                  </tr>
+                ))}
+              </tbody>
+
+            </table>
+          </div>
+        </div>
+      )}
+
+      <Link to="/scheduling" state={{ processes }} className="btn scheduling-btn">
+        FCFS Scheduling
+      </Link>
+
+      <Link to="/SJF_Scheduling" state={{ processes }} className="btn scheduling-btn">
+        SJF preemptive Scheduling
+      </Link>
+
+      <Link to="/RR_scheduling" state={{ processes }} className="btn scheduling-btn">
+        Round Robin Scheduling
+      </Link>
+
+      <Link to="/PriorityScheduling" state={{ processes }} className="btn scheduling-btn">
+        Priority Scheduling
+      </Link>
+
           <Link to="/" className="back-btn">⬅ Back to Control Panel</Link>
         </>
       )}
