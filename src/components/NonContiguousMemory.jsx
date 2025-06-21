@@ -31,8 +31,21 @@ const NonContiguousMemory = () => {
     const pageSize = parseInt(pageSizeRef.current.value);
     const totalMemory = parseInt(totalMemoryRef.current.value);
 
-    if (isNaN(pageSize) || isNaN(totalMemory) || pageSize <= 0 || totalMemory <= 0) {
-      alert('Please enter valid Page Size and Total Memory Size in BYTES');
+    if (
+      isNaN(pageSize) ||
+      isNaN(totalMemory) ||
+      pageSize <= 0 ||
+      totalMemory <= 0
+    ) {
+      alert('Please enter valid Page Size and Total Memory Size in BYTES (positive integers).');
+      return;
+    }
+    if (totalMemory < pageSize) {
+      alert('Total memory must be greater than or equal to page size.');
+      return;
+    }
+    if (totalMemory % pageSize !== 0) {
+      alert('Total memory should be a multiple of page size for clean paging.');
       return;
     }
 
@@ -49,6 +62,17 @@ const NonContiguousMemory = () => {
       alert('Initialize memory first!');
       return;
     }
+    if (
+      isNaN(memoryRequired) ||
+      memoryRequired <= 0
+    ) {
+      alert('Process size must be a positive integer.');
+      return;
+    }
+    if (pageTables[processID]) {
+      alert('This process is already allocated.');
+      return;
+    }
 
     const pagesNeeded = Math.ceil(memoryRequired / pageSizeBytes);
     const availableFrames = physicalMemory.filter(frame => frame === null).length;
@@ -63,7 +87,7 @@ const NonContiguousMemory = () => {
 
     for (let i = 0; i < newPhysicalMemory.length && allocatedFrames.length < pagesNeeded; i++) {
       if (newPhysicalMemory[i] === null) {
-        newPhysicalMemory[i] = processName;  // ✅ Display process name in frame
+        newPhysicalMemory[i] = processName;
         allocatedFrames.push(i);
       }
     }
@@ -84,14 +108,17 @@ const NonContiguousMemory = () => {
     }));
   };
 
-
   const processMap = {};
   localProcesses.forEach(p => {
     processMap[p.processID] = p.owner;
   });
 
   const deallocateProcess = (processID) => {
-    const processName = processMap[processID]; // ✅ Get name from map
+    if (!pageTables[processID]) {
+      alert('Process is not allocated or already deallocated.');
+      return;
+    }
+    const processName = processMap[processID];
 
     const newPhysicalMemory = physicalMemory.map(frame =>
       frame === processName ? null : frame
@@ -104,7 +131,6 @@ const NonContiguousMemory = () => {
     delete newPageTables[processID];
     setPageTables(newPageTables);
   };
-
 
 
 

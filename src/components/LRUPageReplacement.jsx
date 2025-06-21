@@ -4,12 +4,32 @@ const LRUPageReplacement = () => {
   const [pageRefs, setPageRefs] = useState('');
   const [frameSize, setFrameSize] = useState(3); // Default frame size
   const [hitMissLog, setHitMissLog] = useState([]);
+  const [error, setError] = useState('');
 
   const handleSimulate = () => {
+    setError('');
+    if (!pageRefs.trim()) {
+      setError('Please enter page references.');
+      return;
+    }
+    if (!frameSize || isNaN(frameSize) || frameSize < 1) {
+      setError('Frame size must be a positive integer.');
+      return;
+    }
+
     const references = pageRefs
       .split(',')
       .map(ref => ref.trim())
       .filter(ref => ref !== '');
+
+    if (references.length === 0) {
+      setError('Please enter at least one page reference.');
+      return;
+    }
+    if (!references.every(ref => /^\d+$/.test(ref))) {
+      setError('Page references must be numbers separated by commas.');
+      return;
+    }
 
     let memory = [];
     let useHistory = [];
@@ -71,12 +91,15 @@ const LRUPageReplacement = () => {
           type="number"
           placeholder="Frame size"
           value={frameSize}
-          onChange={(e) => setFrameSize(parseInt(e.target.value))}
+          onChange={(e) => setFrameSize(Number(e.target.value))}
           className="form-input"
           min={1}
         />
         <button className="primary-btn" onClick={handleSimulate}>Simulate</button>
       </div>
+      {error && (
+        <div style={{ color: 'red', margin: '10px 0', fontWeight: 'bold' }}>{error}</div>
+      )}
 
       {hitMissLog.length > 0 && (
         <>

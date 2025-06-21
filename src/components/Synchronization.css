@@ -1,68 +1,66 @@
-/* === Synchronization.css - Polished Centered GUI === */
-
+/* Container wrapper */
 .sync-container {
-  max-width:800px;
-  margin: 0 auto;
-  max-height: 90vh;
-  
+  max-width: 1100px;
+  margin: 2rem auto;
   padding: 2rem;
-  background-color: #181818;
+  background-color: #121212;
   border-radius: 10px;
-  box-shadow: 0 0 20px #00f0ff33;
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
   color: white;
   font-family: 'Segoe UI', sans-serif;
 }
 
-/* Header */
-.sync-container h2 {
-  font-size: 2.2rem;
+/* Title */
+.sync-title {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: bold;
   color: #00f0ff;
   margin-bottom: 1.5rem;
-  text-align: center;
 }
 
-/* Mutex Status */
-.mutex-status {
-    text-align: center;
-  font-weight: bold;
+/* Semaphore display */
+.sync-mutex {
   font-size: 1.1rem;
-  margin-bottom: 20px;
-  text-align: center;
-  color: #ccc;
+  margin-bottom: 1rem;
+  font-weight: bold;
+  color: #ffffff;
 }
 
-/* Section Layout */
+/* Grid layout */
 .sync-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 2rem;
-  justify-content: center;
+  justify-content: space-between;
 }
 
-/* Column boxes */
-.sync-column {
-  background: #222;
+/* Individual section */
+.sync-section {
+  flex: 1 1 30%;
+  background-color: #181818;
+  padding: 1rem;
   border-radius: 10px;
-  padding: 1rem 1.5rem;
-  flex: 1 1 350px;
-  min-width: 300px;
   border: 1px solid #333;
 }
 
-/* Titles */
-.sync-column h3,
-.sync-column h4 {
-  color: #00cfff;
+/* Section titles */
+.sync-subtitle {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #ffffff;
   margin-bottom: 1rem;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* Process card */
-.process-card {
-  background-color: #2a2a2a;
-  padding: 12px;
+.sync-process-card {
+  background-color: #222;
+  padding: 0.8rem;
   border-radius: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   border: 1px solid #444;
   text-align: center;
 }
@@ -75,36 +73,83 @@
   color: white;
   border: none;
   border-radius: 6px;
-  font-weight: 600;
+  font-weight: bold;
   cursor: pointer;
   transition: background 0.3s ease;
 }
 
 .sync-btn:hover {
-  background: linear-gradient(to right, #00cfff, #006dcc);
+  background: linear-gradient(to right, #00cfff, #0077cc);
 }
 
 .sync-btn:disabled {
   background: #444;
-  color: #999;
+  color: #aaa;
   cursor: not-allowed;
 }
 
-/* Critical Section Highlight */
-.critical-box {
+.sync-btn.danger {
+  background: #ff4c4c;
+}
+
+.sync-btn.danger:hover {
+  background: #ff1f1f;
+}
+
+/* Critical Section */
+.sync-critical-box {
+  padding: 1rem;
   border: 2px solid #00f0ff;
   background-color: #002a3a;
-  padding: 1rem;
   border-radius: 10px;
-  color: #fff;
+  animation: fadeIn 0.5s ease-in-out;
 }
 
-/* Queue list */
-ul.sync-queue {
-  padding-left: 1.5rem;
-  color: #ddd;
+@keyframes fadeIn {
+  from { opacity: 0.3; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-.sync-queue li {
-  margin-bottom: 5px;
+/* Log section */
+.log-list {
+  font-size: 0.95rem;
+  list-style: disc inside;
+  line-height: 1.5;
+  color: #ccc;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.log-list li {
+  border-bottom: 1px dashed #333;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+/* Back button */
+.back-btn {
+  display: block;
+  margin: 2rem auto 0;
+  padding: 10px 20px;
+  font-weight: bold;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(to right, #00f0ff, #0070ff);
+  color: white;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  background: linear-gradient(to right, #00cfff, #0055cc);
+}
+/* Waiting Queue styled box */
+.sync-waiting-box {
+  padding: 1rem;
+  border: 2px dashed #ffaa00;
+  background-color: #2e1e00;
+  border-radius: 10px;
+  margin-top: 10px;
+  color: #ffd580;
+  font-weight: 500;
 }

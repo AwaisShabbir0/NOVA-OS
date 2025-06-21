@@ -13,7 +13,7 @@ import NonContiguousAllocation from './components/NonContiguousAllocation';
 import ReplacementAlgorithms from './components/replacementAlgorithms';
 import IOManagement from './components/IOManagement';
 import OtherOperations from './components/OtherOperations';
-import Configurations from './components/Configurations';
+// import Configurations from './components/Configurations';
 import Scheduling from './components/Scheduling';
 import RR_scheduling from './components/RR_scheduling';
 import SJF_Scheduling from './components/SJF_Scheduling';
@@ -77,7 +77,7 @@ function App() {
         <Route path="/synchronization" element={<Synchronization />} /> 
         <Route path="/ipc" element={<IPC />} />
 
-        <Route path="/config" element={<Configurations />} />
+        {/* <Route path="/config" element={<Configurations />} /> */}
       </Routes>
     </div>
   );

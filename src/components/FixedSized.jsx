@@ -14,8 +14,16 @@ const FixedSized = () => {
 
   const handleAddMemoryBlock = () => {
     const blockSize = parseInt(memoryBlockRef.current.value);
-    if (isNaN(blockSize)) {
-      alert('Please enter valid block size in KB');
+    if (
+      isNaN(blockSize) ||
+      blockSize < 1 ||
+      memoryBlockRef.current.value.trim() === ''
+    ) {
+      alert('Please enter a valid memory block size (positive integer in KB).');
+      return;
+    }
+    if (blockSize > 1024 * 1024) {
+      alert('Block size is too large. Please enter a reasonable value (max 1GB).');
       return;
     }
 
@@ -34,8 +42,20 @@ const FixedSized = () => {
 
   const handleAllocate = () => {
     const size = parseInt(processSizeRef.current.value);
-    if (isNaN(size)) {
-      alert('Please enter valid process size in KB');
+    if (
+      isNaN(size) ||
+      size < 1 ||
+      processSizeRef.current.value.trim() === ''
+    ) {
+      alert('Please enter a valid process size (positive integer in KB).');
+      return;
+    }
+    if (size > totalMemory) {
+      alert('Process size cannot exceed total memory.');
+      return;
+    }
+    if (processes.length >= memory.length) {
+      alert('All memory blocks are currently allocated.');
       return;
     }
 
@@ -53,18 +73,26 @@ const FixedSized = () => {
         newMemory = firstFit([...memory], size, processId);
     }
 
-    if (newMemory !== memory) {
+    // Check if allocation was successful
+    const allocationSuccess = newMemory.some(
+      (block, idx) => block.allocated && memory[idx] !== block
+    );
+    if (allocationSuccess) {
       setMemory(newMemory);
       setProcesses([...processes, processId]);
       processSizeRef.current.value = '';
     } else {
-      alert('Memory allocation failed! Not enough space.');
+      alert('Memory allocation failed! Not enough space or no suitable block.');
     }
   };
 
   const handleDeallocate = () => {
     if (!selectedProcess) {
-      alert('Please select a process to deallocate');
+      alert('Please select a process to deallocate.');
+      return;
+    }
+    if (!processes.includes(selectedProcess)) {
+      alert('Selected process does not exist.');
       return;
     }
 
