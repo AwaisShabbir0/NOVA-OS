@@ -11,10 +11,7 @@ const OtherOperations = () => {
         <button className="btn" onClick={() => navigate("/synchronization")}>
           Process Synchronization
         </button>
-        <button className="btn" onClick={() => navigate("/ipc")}>
-          Inter-Process Communication
-        </button>
-
+    
         <button className="back-btn" onClick={() => navigate("/")}>
           Back
         </button>
