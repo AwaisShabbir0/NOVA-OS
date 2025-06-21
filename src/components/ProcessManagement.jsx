@@ -4,20 +4,6 @@ import PCB from '../models/PCB';
 import './ProcessManagement.css';
 
 const ProcessManagement = () => {
-  const [maxProcesses, setMaxProcesses] = useState(() => {
-    const saved = localStorage.getItem('maxProcesses');
-    return saved ? parseInt(saved) : null;
-  });
-  const [remaining, setRemaining] = useState(() => {
-    const saved = localStorage.getItem('remainingProcesses');
-    return saved ? parseInt(saved) : null;
-  });
-  const [initialPrompt, setInitialPrompt] = useState(() => {
-    const saved = localStorage.getItem('maxProcesses');
-    return saved ? false : true;
-  });
-
-
   const [processes, setProcesses] = useState(() => {
     const saved = localStorage.getItem('pcbProcesses');
     return saved ? JSON.parse(saved).map(data => new PCB(data)) : [];
@@ -44,9 +30,6 @@ const ProcessManagement = () => {
     return savedID ? Math.max(parseInt(savedID), maxID + 1) : maxID + 1;
   });
 
-  const [showLimitPopup, setShowLimitPopup] = useState(false);
-  const [additionalLimit, setAdditionalLimit] = useState('');
-
   useEffect(() => {
     localStorage.setItem('pcbProcesses', JSON.stringify(processes));
   }, [processes]);
@@ -56,19 +39,6 @@ const ProcessManagement = () => {
   }, [nextProcessID]);
 
   const processors = ["CPU-0", "CPU-1", "CPU-2", "CPU-3"];
-
-  const handleInitialLimitSubmit = (e) => {
-    localStorage.setItem('maxProcesses', num.toString());
-    localStorage.setItem('remainingProcesses', num.toString());
-
-    e.preventDefault();
-    const num = parseInt(e.target.elements.processCount.value);
-    if (!isNaN(num) && num > 0) {
-      setMaxProcesses(num);
-      setRemaining(num);
-      setInitialPrompt(false);
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, type, value, checked } = e.target;
@@ -80,11 +50,6 @@ const ProcessManagement = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (remaining === 0) {
-      setShowLimitPopup(true); // Show popup instead of alert
-      setActiveModal(null);    // Close the create modal while popup is open
-      return;
-    }
 
     const newProcess = new PCB({
       owner: formData.owner,
@@ -99,9 +64,6 @@ const ProcessManagement = () => {
     newProcess.processID = nextProcessID;
     setProcesses(prev => [...prev, newProcess]);
     setNextProcessID(prev => prev + 1);
-    setRemaining(prev => prev - 1);
-    localStorage.setItem('remainingProcesses', (remaining - 1).toString());
-
 
     setFormData({
       owner: '',
@@ -197,66 +159,20 @@ const ProcessManagement = () => {
     }
   };
 
-  const handleAddMoreProcesses = (e) => {
-    e.preventDefault();
-    const addNum = parseInt(additionalLimit);
-    if (!isNaN(addNum) && addNum > 0) {
-      const newMax = maxProcesses + addNum;
-      const newRemaining = remaining + addNum;
-      setMaxProcesses(newMax);
-      setRemaining(newRemaining);
-      sessionStorage.setItem('maxProcesses', newMax.toString());
-      sessionStorage.setItem('remainingProcesses', newRemaining.toString());
-      setShowLimitPopup(false);
-      setAdditionalLimit('');
-      setActiveModal('create'); // <-- Reopen the create process modal
-    }
-  };
-
   return (
     <div className="process-management">
-      {/* Limit reached popup */}
-      {showLimitPopup && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Process Limit Reached</h3>
-            <p>You have reached the maximum number of processes.</p>
-            <form onSubmit={handleAddMoreProcesses}>
-              <input
-                type="number"
-                min="1"
-                placeholder="Add more processes"
-                value={additionalLimit}
-                onChange={e => setAdditionalLimit(e.target.value)}
-                required
-              />
-              <button className="btn-add" type="submit">Add</button>
-              <button className="close-btn" type="button" onClick={() => setShowLimitPopup(false)}>Cancel</button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {initialPrompt ? (
-        <form onSubmit={handleInitialLimitSubmit} className="initial-limit-form">
-          <h2>Enter Number of Processes to Create</h2>
-          <input type="number" name="processCount" min="1" required />
-          <button className='btn' type="submit">Set Limit</button>
-        </form>
-      ) : (
-        <>
-          <h2>Process Management</h2>
-          <div className="buttons">
-            <button className="btn" onClick={() => setActiveModal('create')}>Create Process ({remaining} left)</button>
-            <button className="btn" onClick={() => setActiveModal('destroy')}>Destroy</button>
-            <button className="btn" onClick={() => setActiveModal('suspend')}>Suspend</button>
-            <button className="btn" onClick={() => setActiveModal('resume')}>Resume</button>
-            <button className="btn" onClick={() => setActiveModal('block')}>Block</button>
-            <button className="btn" onClick={() => setActiveModal('wakeup')}>Wakeup</button>
-            <button className="btn" onClick={() => setActiveModal('dispatch')}>Dispatch</button>
-            <button className="btn" onClick={() => setActiveModal('changePriority')}>Change Priority</button>
-          </div>
-          {activeModal && (
+      <h2>Process Management</h2>
+      <div className="buttons">
+        <button className="btn" onClick={() => setActiveModal('create')}>Create Process</button>
+        <button className="btn" onClick={() => setActiveModal('destroy')}>Destroy</button>
+        <button className="btn" onClick={() => setActiveModal('suspend')}>Suspend</button>
+        <button className="btn" onClick={() => setActiveModal('resume')}>Resume</button>
+        <button className="btn" onClick={() => setActiveModal('block')}>Block</button>
+        <button className="btn" onClick={() => setActiveModal('wakeup')}>Wakeup</button>
+        <button className="btn" onClick={() => setActiveModal('dispatch')}>Dispatch</button>
+        <button className="btn" onClick={() => setActiveModal('changePriority')}>Change Priority</button>
+      </div>
+      {activeModal && (
         <div className="modal-overlay">
           <div className="modal">
             <button className="close-btn" onClick={() => setActiveModal(null)}>X</button>
@@ -496,7 +412,7 @@ const ProcessManagement = () => {
                   <th>Priority</th>
                   <th>Arrival</th>
                   <th>Burst</th>
-                  <th>Process Size</th> {/* ✅ new column */}
+                  <th>Process Size</th>
                   <th>Processor</th>
                   <th>I/O State</th>
                   <th>I/O Request</th>
@@ -512,7 +428,7 @@ const ProcessManagement = () => {
                     <td className={`priority-${process.priority}`}>{process.priority}</td>
                     <td>{process.arrivalTime}s</td>
                     <td>{process.burstTime}s</td>
-                    <td>{process.memoryRequired} Bytes</td> {/* ✅ exact bytes */}
+                    <td>{process.memoryRequired} Bytes</td>
                     <td>{process.processor}</td>
                     <td>{process.ioState}</td>
                     <td>{process.ioRequest ? "Yes" : "No"}</td>
@@ -541,9 +457,7 @@ const ProcessManagement = () => {
         Priority Scheduling
       </Link>
 
-          <Link to="/" className="back-btn">⬅ Back to Control Panel</Link>
-        </>
-      )}
+      <Link to="/" className="back-btn">⬅ Back to Control Panel</Link>
     </div>
   );
 }
