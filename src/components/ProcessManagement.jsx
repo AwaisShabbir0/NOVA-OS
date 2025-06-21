@@ -20,8 +20,10 @@ function ProcessManagement() {
     burstTime: '',
     arrivalTime: '',
     processor: 'CPU-0',
-    ioRequest: false // ✅ added
+    ioRequest: false,
+    memoryRequired: '' // ✅ new field
   });
+
 
   const [selectedProcessID, setSelectedProcessID] = useState('');
 
@@ -70,7 +72,8 @@ function ProcessManagement() {
       burstTime: parseInt(formData.burstTime),
       arrivalTime: parseInt(formData.arrivalTime),
       processor: formData.processor,
-      ioRequest: formData.ioRequest  // ✅ Include this line
+      ioRequest: formData.ioRequest,
+      memoryRequired: parseInt(formData.memoryRequired) // ✅ stored as bytes
     });
 
     newProcess.processID = nextProcessID;
@@ -84,9 +87,12 @@ function ProcessManagement() {
       burstTime: '1',
       arrivalTime: '0',
       processor: 'CPU-0',
-      ioRequest: false   // ✅ Reset this too
+      ioRequest: false,
+      memoryRequired: ''
     });
   };
+
+
 
 
   const handleDestroyProcess = (e) => {
@@ -239,6 +245,15 @@ function ProcessManagement() {
                   min="0"
                   max="9"
                   value={formData.priority}
+                  onChange={handleInputChange}
+                  required
+                />
+                <input
+                  type="number"
+                  name="memoryRequired"
+                  placeholder="Process Size (Bytes)"
+                  min="1"
+                  value={formData.memoryRequired}
                   onChange={handleInputChange}
                   required
                 />
@@ -417,7 +432,7 @@ function ProcessManagement() {
 
       {processes.length > 0 && (
         <div className="process-list">
-          <h3>Processes:</h3>
+          <h3>Processes (PCB)</h3>
           <div className="table-container">
             <table className="process-table">
               <thead>
@@ -428,12 +443,13 @@ function ProcessManagement() {
                   <th>Priority</th>
                   <th>Arrival</th>
                   <th>Burst</th>
-                  <th>Memory (MB)</th>
+                  <th>Process Size</th> {/* ✅ new column */}
                   <th>Processor</th>
                   <th>I/O State</th>
                   <th>I/O Request</th>
                 </tr>
               </thead>
+
               <tbody>
                 {processes.map(process => (
                   <tr key={process.processID}>
@@ -443,20 +459,21 @@ function ProcessManagement() {
                     <td className={`priority-${process.priority}`}>{process.priority}</td>
                     <td>{process.arrivalTime}s</td>
                     <td>{process.burstTime}s</td>
-                    <td>{Math.round(process.memoryRequired / 1024 * 10) / 10}</td>
+                    <td>{process.memoryRequired} Bytes</td> {/* ✅ exact bytes */}
                     <td>{process.processor}</td>
                     <td>{process.ioState}</td>
                     <td>{process.ioRequest ? "Yes" : "No"}</td>
                   </tr>
                 ))}
               </tbody>
+
             </table>
           </div>
         </div>
       )}
 
       <Link to="/scheduling" state={{ processes }} className="btn scheduling-btn">
-        FCFS Scheduling 
+        FCFS Scheduling
       </Link>
 
       <Link to="/SJF_Scheduling" state={{ processes }} className="btn scheduling-btn">

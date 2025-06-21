@@ -9,9 +9,9 @@ class PCB {
     ioRequest = false,
     currentState = 'new',
     ioState = 'Idle',
-    memoryRequired = null
+    memoryRequired // ✅ Now accepts memory in bytes directly from form
   }) {
-    this.processID = processID ?? null; // <-- ✅ This line is needed
+    this.processID = processID ?? null;
     this.owner = owner;
     this.priority = priority;
     this.burstTime = burstTime;
@@ -20,12 +20,13 @@ class PCB {
     this.ioRequest = ioRequest;
     this.currentState = currentState;
     this.ioState = ioState;
-    this.memoryRequired = memoryRequired ?? Math.floor(Math.random() * (10 * 1024 - 512 + 1)) + 512; // in KB
+    
+    // ✅ Use provided memoryRequired (in BYTES), else default to random value in BYTES
+    this.memoryRequired = memoryRequired ?? (Math.floor(Math.random() * (10240 - 512 + 1)) + 512); // between 512B and 10KB
   }
 
-
   calculateMemory() {
-    // Base 512KB + 128KB per second of burst time
+    // Base 512 + 128 per burst second (in bytes)
     return 512 + (this.burstTime * 128);
   }
 

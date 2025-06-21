@@ -9,7 +9,6 @@ function ControlPanel() {
         <Link to="/memory" className="btn">Memory Management</Link>
         <Link to="/io" className="btn">I/O Management</Link>
         <Link to="/other" className="btn">Other Operations</Link>
-        <Link to="/config" className="btn">Configurations</Link>
       </div>
     </div>
   )
